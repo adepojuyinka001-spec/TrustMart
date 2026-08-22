@@ -14,6 +14,7 @@ build/
 out/
 .turbo/
 coverage/
+*.tsbuildinfo
 
 # Prisma
 *.db
