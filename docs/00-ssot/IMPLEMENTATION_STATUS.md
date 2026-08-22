@@ -5,7 +5,7 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 ## Repository / infrastructure
 - [x] Private GitHub repository created (`adepojuyinka001-spec/TrustMart`).
 - [x] `CLAUDE.md` and `docs/` tree scaffolded.
-- [x] Local git initialized and first commit made (not yet pushed to remote).
+- [x] Local git initialized, committed, and pushed to `origin/master`.
 - [x] pnpm workspace + Turborepo skeleton.
 - [x] Next.js App Router app skeleton (`apps/web`) — branded placeholder page, verified in-browser (navy/gold/Montserrat render correctly).
 - [x] NestJS app skeleton (`apps/api`) — builds and type-checks cleanly.
