@@ -13,6 +13,7 @@ build/
 .next/
 out/
 .turbo/
+coverage/
 
 # Prisma
 *.db

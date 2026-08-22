@@ -5,22 +5,23 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 ## Repository / infrastructure
 - [x] Private GitHub repository created (`adepojuyinka001-spec/TrustMart`).
 - [x] `CLAUDE.md` and `docs/` tree scaffolded.
-- [ ] Local git initialized and first commit pushed.
-- [ ] pnpm workspace + Turborepo skeleton.
-- [ ] Next.js App Router app skeleton.
-- [ ] NestJS app skeleton.
-- [ ] Prisma initialized.
-- [ ] Docker Compose (Postgres + n8n) for local dev.
+- [x] Local git initialized and first commit made (not yet pushed to remote).
+- [x] pnpm workspace + Turborepo skeleton.
+- [x] Next.js App Router app skeleton (`apps/web`) — branded placeholder page, verified in-browser (navy/gold/Montserrat render correctly).
+- [x] NestJS app skeleton (`apps/api`) — builds and type-checks cleanly.
+- [x] Prisma initialized — schema + seed script written, client generates successfully.
+- [x] Docker Compose (Postgres + n8n) file written — **not yet run**; Docker Desktop is not installed on this machine (see Open Decision below).
 
 ## Shared Core
-- [ ] Identity/auth provider abstraction
-- [ ] User / Profile
-- [ ] Business / Staff
-- [ ] RBAC
-- [ ] Platform configuration
-- [ ] Audit
-- [ ] Consent / notification preferences
-- [ ] Verification foundation
+- [x] Identity/auth provider abstraction — `AuthProvider` interface + self-hosted `LocalAuthProvider` (bcryptjs + JWT), unit-tested.
+- [x] User / Profile — schema + CRUD endpoints written.
+- [x] Business / Staff — schema + CRUD endpoints written.
+- [x] RBAC — Role/Permission/UserRole schema, seed data, `PermissionGuard`, unit-tested (positive + negative).
+- [x] Platform configuration — generic typed config store, seeded with SSOT defaults, admin-gated write endpoint.
+- [x] Audit — `AuditService` wired into every mutating Shared Core action.
+- [x] Consent / notification preferences — schema + endpoints written.
+- [x] Verification foundation — provider-agnostic `VerificationCase` shell written.
+- [ ] **Database-dependent verification pending**: `prisma migrate dev`, seed script run, and the full e2e test suite (`apps/api/test/app.e2e-spec.ts`) all require a live Postgres instance, which needs Docker Desktop installed locally first. Code has been type-checked, built, and covered by DB-independent unit tests (7/7 passing) in the meantime.
 
 ## Marketplace Core
 - [ ] Category / Dynamic Attribute Engine
