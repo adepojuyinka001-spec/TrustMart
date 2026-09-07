@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ListingService } from "./listing.service";
+import { ListingLifecycleService } from "./listing-lifecycle.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
 import { PermissionGuard } from "../rbac/permission.guard";
 import { RequirePermission } from "../rbac/require-permission.decorator";
@@ -12,7 +13,25 @@ import { RejectListingDto } from "./dto/reject-listing.dto";
 
 @Controller("listings")
 export class ListingController {
-  constructor(private readonly listingService: ListingService) {}
+  constructor(
+    private readonly listingService: ListingService,
+    private readonly listingLifecycleService: ListingLifecycleService,
+  ) {}
+
+  // n8n (or an admin) triggers this on a schedule; the sweep itself is deterministic
+  // backend logic (CLAUDE.md SS26) — n8n never sets listing status directly.
+  @Post("lifecycle/sweep")
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @RequirePermission("listing:lifecycle_sweep")
+  sweep(@CurrentUser() user: RequestUser, @Req() req: AuthenticatedRequest) {
+    return this.listingLifecycleService.sweep(user.userId, req.ip);
+  }
+
+  @Post(":id/renew")
+  @UseGuards(JwtAuthGuard)
+  renew(@Param("id") id: string, @CurrentUser() user: RequestUser, @Req() req: AuthenticatedRequest) {
+    return this.listingLifecycleService.renew(id, user.userId, req.ip);
+  }
 
   @Get()
   listActive(@Query("subcategoryId") subcategoryId?: string) {

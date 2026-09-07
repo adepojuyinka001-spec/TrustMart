@@ -9,6 +9,7 @@ import type { UpdateListingDto } from "./dto/update-listing.dto";
 
 const OPEN_FOR_EDIT: ListingStatus[] = [ListingStatus.DRAFT, ListingStatus.ACTIVE];
 const AWAITING_MODERATION: ListingStatus[] = [ListingStatus.SUBMITTED, ListingStatus.CHECKING];
+const SOLD_FROM: ListingStatus[] = [ListingStatus.ACTIVE, ListingStatus.EXPIRING];
 
 // Listing Engine (Blueprint SS7). Lifecycle: DRAFT -> SUBMITTED -> CHECKING -> ACTIVE ->
 // EXPIRING -> EXPIRED, plus SOLD / REJECTED / SUSPENDED / ARCHIVED (SS12). Moderation and
@@ -245,10 +246,15 @@ export class ListingService {
     return updated;
   }
 
+  // Reachable from ACTIVE or EXPIRING — a seller responding to the "SOLD or STILL
+  // AVAILABLE?" prompt at expiry (CLAUDE.md SS10) picks SOLD via this same endpoint;
+  // STILL AVAILABLE goes through ListingLifecycleService.renew() instead.
   async markSold(listingId: string, sellerUserId: string, ipAddress?: string) {
     const listing = await this.assertOwnsListing(listingId, sellerUserId);
-    if (listing.status !== ListingStatus.ACTIVE) {
-      throw new ForbiddenException(`Only an ACTIVE listing can be marked SOLD (current status: ${listing.status}).`);
+    if (!SOLD_FROM.includes(listing.status)) {
+      throw new ForbiddenException(
+        `Only an ACTIVE or EXPIRING listing can be marked SOLD (current status: ${listing.status}).`,
+      );
     }
 
     const updated = await this.prisma.listing.update({

@@ -18,6 +18,7 @@ const PERMISSIONS = [
   { key: "audit:read", label: "Read audit events" },
   { key: "category:manage", label: "Manage categories, subcategories and attributes" },
   { key: "listing:moderate", label: "Approve or reject submitted listings" },
+  { key: "listing:lifecycle_sweep", label: "Run the listing expiry/warning sweep" },
   { key: "matching:manage", label: "Manage matching profiles and weights" },
   { key: "lead:moderate", label: "Mark a lead as spam/fraud" },
   { key: "subscription:manage", label: "Manage subscription plans and entitlements" },
@@ -49,6 +50,12 @@ const CONFIG_DEFAULTS: Array<{
     valueType: ConfigValueType.NUMBER,
     value: "14",
     description: "Initial default listing lifecycle in days (SSOT SS6).",
+  },
+  {
+    key: "marketplace.listing_expiry_warning_days",
+    valueType: ConfigValueType.NUMBER,
+    value: "2",
+    description: "Days before expiresAt that an ACTIVE listing moves to EXPIRING (CLAUDE.md SS10).",
   },
   {
     key: "marketplace.subscription_weekly_naira",
