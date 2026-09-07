@@ -63,4 +63,4 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [ ] Service-recovery case flow
 
 ## Cross-cutting
-- [ ] Adversarial security review pass
+- [x] Adversarial security review pass (2026-09-07, initial) — ran the `security-review` skill against the full diff of all 8 commits this session (Marketplace Core wiring, Matching Engine, Engagement, Subscription catalog, Escrow scaffolding, Marketplace-to-Escrow handoff, Swagger docs). Focused on IDOR/ownership checks on every resource-ID endpoint, buyer-budget/contact-data leakage to sellers, RBAC guard correctness, and injection vectors. **No high-confidence findings.** This is a scoped review of what exists so far (no payments/ledger/rewards/n8n/AI yet, so those categories in CLAUDE.md SS45 don't yet apply) — re-run after each future sensitive phase, per CLAUDE.md SS45, especially once Phase 6 (Payments & Ledger) introduces real money movement.
