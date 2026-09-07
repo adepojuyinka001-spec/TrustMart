@@ -138,6 +138,45 @@ const SUBSCRIPTION_PLANS: Array<{
   },
 ];
 
+// Demo/starter categories matching the SSOT rollout order (Real Estate, Vehicles first)
+// so the web app has real data to browse without requiring manual admin setup first.
+// Data, not hard-coded matching logic — sellers/admins can add more via the API.
+const CATEGORIES = [
+  {
+    key: "real-estate",
+    label: "Real Estate",
+    subcategories: [
+      {
+        key: "duplex",
+        label: "Duplex",
+        attributes: [
+          { key: "bedrooms", label: "Bedrooms", dataType: "NUMBER" as const, required: true },
+          { key: "land-size-sqm", label: "Land Size (sqm)", dataType: "NUMBER" as const, required: false },
+        ],
+      },
+      {
+        key: "apartment",
+        label: "Apartment",
+        attributes: [{ key: "bedrooms", label: "Bedrooms", dataType: "NUMBER" as const, required: true }],
+      },
+    ],
+  },
+  {
+    key: "vehicles",
+    label: "Vehicles",
+    subcategories: [
+      {
+        key: "sedan",
+        label: "Sedan",
+        attributes: [
+          { key: "year", label: "Year", dataType: "NUMBER" as const, required: true },
+          { key: "mileage-km", label: "Mileage (km)", dataType: "NUMBER" as const, required: false },
+        ],
+      },
+    ],
+  },
+];
+
 async function main() {
   const roleByKey = new Map<string, { id: string }>();
   for (const role of ROLES) {
@@ -181,6 +220,48 @@ async function main() {
     });
   }
 
+  for (const [categoryOrder, category] of CATEGORIES.entries()) {
+    const createdCategory = await prisma.category.upsert({
+      where: { key: category.key },
+      update: { label: category.label },
+      create: { key: category.key, label: category.label, displayOrder: categoryOrder },
+    });
+
+    for (const [subOrder, subcategory] of category.subcategories.entries()) {
+      const createdSubcategory = await prisma.subcategory.upsert({
+        where: { categoryId_key: { categoryId: createdCategory.id, key: subcategory.key } },
+        update: { label: subcategory.label },
+        create: {
+          categoryId: createdCategory.id,
+          key: subcategory.key,
+          label: subcategory.label,
+          displayOrder: subOrder,
+        },
+      });
+
+      for (const [attrOrder, attribute] of subcategory.attributes.entries()) {
+        const createdAttribute = await prisma.attributeDefinition.upsert({
+          where: { key: attribute.key },
+          update: { label: attribute.label },
+          create: { key: attribute.key, label: attribute.label, dataType: attribute.dataType },
+        });
+
+        await prisma.categoryAttribute.upsert({
+          where: {
+            subcategoryId_attributeId: { subcategoryId: createdSubcategory.id, attributeId: createdAttribute.id },
+          },
+          update: { required: attribute.required },
+          create: {
+            subcategoryId: createdSubcategory.id,
+            attributeId: createdAttribute.id,
+            required: attribute.required,
+            displayOrder: attrOrder,
+          },
+        });
+      }
+    }
+  }
+
   for (const plan of SUBSCRIPTION_PLANS) {
     const existing = await prisma.subscriptionPlan.findUnique({ where: { key: plan.key } });
     if (existing) continue;
@@ -197,7 +278,9 @@ async function main() {
     });
   }
 
-  console.log("Shared Core seed complete: roles, permissions, default platform configuration, and subscription catalog.");
+  console.log(
+    "Shared Core seed complete: roles, permissions, default platform configuration, demo categories, and subscription catalog.",
+  );
 }
 
 main()

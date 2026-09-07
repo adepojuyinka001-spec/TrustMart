@@ -191,6 +191,7 @@ export class BuyerRequestService {
     return this.prisma.buyerRequest.findMany({
       where: { buyerUserId },
       orderBy: { createdAt: "desc" },
+      include: { subcategory: { include: { category: true } } },
     });
   }
 }

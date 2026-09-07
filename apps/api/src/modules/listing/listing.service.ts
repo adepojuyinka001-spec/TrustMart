@@ -290,6 +290,7 @@ export class ListingService {
     return this.prisma.listing.findMany({
       where: { sellerUserId },
       orderBy: { createdAt: "desc" },
+      include: { subcategory: { include: { category: true } } },
     });
   }
 
@@ -297,6 +298,7 @@ export class ListingService {
     return this.prisma.listing.findMany({
       where: { status: ListingStatus.ACTIVE, subcategoryId },
       orderBy: { activatedAt: "desc" },
+      include: { subcategory: { include: { category: true } } },
     });
   }
 
