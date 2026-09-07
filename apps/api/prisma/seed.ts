@@ -1,4 +1,4 @@
-import { PrismaClient, ConfigValueType } from "@prisma/client";
+import { PrismaClient, ConfigValueType, BillingPeriod } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -20,6 +20,7 @@ const PERMISSIONS = [
   { key: "listing:moderate", label: "Approve or reject submitted listings" },
   { key: "matching:manage", label: "Manage matching profiles and weights" },
   { key: "lead:moderate", label: "Mark a lead as spam/fraud" },
+  { key: "subscription:manage", label: "Manage subscription plans and entitlements" },
 ];
 
 // ADMIN gets every permission. Other roles get none by default in Shared Core —
@@ -81,6 +82,54 @@ const CONFIG_DEFAULTS: Array<{
   },
 ];
 
+// Illustrative starter catalog matching the SSOT's initial introductory pricing —
+// data, not hard-coded logic (CLAUDE.md SS12). Entitlement *meaning* is not enforced
+// anywhere yet; these rows just describe what each plan is meant to unlock for whichever
+// future module reads them.
+const SUBSCRIPTION_PLANS: Array<{
+  key: string;
+  label: string;
+  description: string;
+  priceMinorUnits: bigint;
+  billingPeriod: BillingPeriod;
+  displayOrder: number;
+  entitlements: Array<{ key: string; valueType: ConfigValueType; value: string }>;
+}> = [
+  {
+    key: "FREE",
+    label: "Free",
+    description: "Limited access for sellers just getting started.",
+    priceMinorUnits: 0n,
+    billingPeriod: BillingPeriod.NONE,
+    displayOrder: 0,
+    entitlements: [{ key: "listing_limit", valueType: ConfigValueType.NUMBER, value: "1" }],
+  },
+  {
+    key: "WEEKLY_SELLER",
+    label: "Weekly Seller",
+    description: "Initial introductory weekly plan (SSOT SS6).",
+    priceMinorUnits: 500_000n, // NGN 5,000 in kobo
+    billingPeriod: BillingPeriod.WEEKLY,
+    displayOrder: 1,
+    entitlements: [
+      { key: "listing_limit", valueType: ConfigValueType.NUMBER, value: "10" },
+      { key: "lead_contact_access", valueType: ConfigValueType.BOOLEAN, value: "true" },
+    ],
+  },
+  {
+    key: "MONTHLY_SELLER",
+    label: "Monthly Seller",
+    description: "Initial introductory monthly plan (SSOT SS6).",
+    priceMinorUnits: 1_500_000n, // NGN 15,000 in kobo
+    billingPeriod: BillingPeriod.MONTHLY,
+    displayOrder: 2,
+    entitlements: [
+      { key: "listing_limit", valueType: ConfigValueType.NUMBER, value: "50" },
+      { key: "lead_contact_access", valueType: ConfigValueType.BOOLEAN, value: "true" },
+    ],
+  },
+];
+
 async function main() {
   const roleByKey = new Map<string, { id: string }>();
   for (const role of ROLES) {
@@ -124,7 +173,23 @@ async function main() {
     });
   }
 
-  console.log("Shared Core seed complete: roles, permissions, and default platform configuration.");
+  for (const plan of SUBSCRIPTION_PLANS) {
+    const existing = await prisma.subscriptionPlan.findUnique({ where: { key: plan.key } });
+    if (existing) continue;
+    await prisma.subscriptionPlan.create({
+      data: {
+        key: plan.key,
+        label: plan.label,
+        description: plan.description,
+        priceMinorUnits: plan.priceMinorUnits,
+        billingPeriod: plan.billingPeriod,
+        displayOrder: plan.displayOrder,
+        entitlements: { create: plan.entitlements },
+      },
+    });
+  }
+
+  console.log("Shared Core seed complete: roles, permissions, default platform configuration, and subscription catalog.");
 }
 
 main()

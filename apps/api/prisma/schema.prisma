@@ -691,3 +691,51 @@ model ContactAccessGrant {
 
   @@index([leadId])
 }
+
+// ---------- Subscription catalog (Phase 4, catalog only) ----------
+// CLAUDE.md SS12: "Plans and entitlements must not be hard-coded." This is the plan
+// catalog only — SubscriptionPlan/SubscriptionEntitlement define what plans exist and
+// what they unlock. The seller's actual paid Subscription, SubscriptionPayment, and
+// activation flow are deliberately NOT built yet: activation normally requires verified
+// payment (CLAUDE.md SS16), and no payment provider has been chosen (Open Decision #1).
+// Founder explicitly chose "catalog only, no activation yet" over building a manual
+// admin-attested activation stand-in (2026-09-07 decision) — do not add a Subscription/
+// activation model without a fresh decision, since that would be inventing a
+// money-adjacent flow ahead of the provider decision.
+
+enum BillingPeriod {
+  NONE
+  WEEKLY
+  MONTHLY
+}
+
+model SubscriptionPlan {
+  id              String        @id @default(cuid())
+  key             String        @unique // e.g. FREE, WEEKLY_SELLER, PROFESSIONAL, BUSINESS, ENTERPRISE
+  label           String
+  description     String?
+  priceMinorUnits BigInt        @default(0)
+  currency        String        @default("NGN")
+  billingPeriod   BillingPeriod @default(NONE)
+  isActive        Boolean       @default(true)
+  displayOrder    Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  entitlements SubscriptionEntitlement[]
+}
+
+// Generic key/value so entitlement meaning stays data, not code — a future module
+// (e.g. Listing, ContactAccess) interprets a key like "listing_limit" or
+// "lead_contact_access"; this catalog only records what each plan grants.
+model SubscriptionEntitlement {
+  id        String           @id @default(cuid())
+  planId    String
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  key       String
+  valueType ConfigValueType
+  value     String
+  createdAt DateTime         @default(now())
+
+  @@unique([planId, key])
+}
