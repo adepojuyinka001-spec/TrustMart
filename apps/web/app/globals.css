@@ -13,3 +13,27 @@ body {
   background-color: var(--tm-white);
   color: var(--tm-dark);
 }
+
+@layer components {
+  .tm-input {
+    @apply w-full rounded-md border border-tm-navy/20 px-3 py-2 text-sm text-tm-dark outline-none transition focus:border-tm-navy focus:ring-1 focus:ring-tm-navy;
+  }
+  .tm-select {
+    @apply w-full rounded-md border border-tm-navy/20 bg-tm-white px-3 py-2 text-sm text-tm-dark outline-none transition focus:border-tm-navy focus:ring-1 focus:ring-tm-navy;
+  }
+  .tm-card {
+    @apply rounded-lg border border-tm-navy/10 bg-tm-white p-5 shadow-sm;
+  }
+  .tm-badge {
+    @apply inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .tm-btn-primary {
+    @apply rounded-md bg-tm-navy px-4 py-2 text-sm font-semibold text-tm-white transition hover:opacity-90 disabled:opacity-50;
+  }
+  .tm-btn-gold {
+    @apply rounded-md bg-tm-gold px-4 py-2 text-sm font-semibold text-tm-dark transition hover:opacity-90 disabled:opacity-50;
+  }
+  .tm-btn-outline {
+    @apply rounded-md border border-tm-navy/30 px-4 py-2 text-sm font-semibold text-tm-navy transition hover:border-tm-navy disabled:opacity-50;
+  }
+}

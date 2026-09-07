@@ -4,8 +4,8 @@
     {
       "name": "trustmart-web",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "pnpm@latest", "--filter", "@trustmart/web", "run", "dev"],
-      "port": 3000
+      "runtimeArgs": ["--yes", "pnpm@9", "--filter", "@trustmart/web", "run", "dev"],
+      "port": 3001
     },
     {
       "name": "trustmart-api",
