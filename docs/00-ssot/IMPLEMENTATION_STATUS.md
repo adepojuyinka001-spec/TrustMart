@@ -40,10 +40,11 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [x] Listing expiry/renewal — `ListingLifecycleService`: idempotent `sweep()` (ACTIVE→EXPIRING inside a configurable warning window, then →EXPIRED past `expiresAt`; admin/n8n-triggered via `POST /listings/lifecycle/sweep`, gated on `listing:lifecycle_sweep` — n8n may call the schedule per CLAUDE.md SS26 but never sets status itself) and `renew()` (seller's explicit "STILL AVAILABLE" response, `POST /listings/:id/renew`, resets to ACTIVE with a fresh `expiresAt`). `ListingService.markSold()` extended to also accept EXPIRING (the other branch of the SOLD-vs-STILL-AVAILABLE prompt). Price history and re-engagement notifications remain for a later pass (re-engagement is n8n/notification territory, Phase 11).
 
 ## Standalone Escrow
-- [ ] Parties / versioned terms / acceptance
-- [ ] Conditions
-- [ ] Fee allocation
-- [ ] State transitions
+- [x] Parties / versioned terms / acceptance — `EscrowService`: one Escrow Engine for any origin (`EscrowOriginType`: DIRECT/MARKETPLACE/PARTNER/BUSINESS_API, Marketplace reference optional/nullable). Creation invites parties and proposes version-1 terms in one transaction (creator auto-accepts their own proposal); `accept()` requires every party to accept the *current* active term version before the transaction moves DRAFT/TERMS_PROPOSED→ACCEPTED; a material amendment (`proposeAmendment()`) creates a new version, resets to TERMS_PROPOSED, and clears the acceptance requirement — no party can silently keep old acceptances valid against new terms (CLAUDE.md SS14).
+- [x] Conditions — free-text `EscrowCondition` rows per term version, ordered, editable only via a new version (never mutated on an accepted version).
+- [x] Fee allocation — `feeAllocation` (BUYER_PAYS/SELLER_PAYS/SHARED, with `buyerFeeSharePercent` for SHARED) recorded as an agreed *term*, not a money movement. `feePercent` is snapshotted from `PlatformConfiguration` (`escrow.fee_percent`) at proposal time so a later config change never retroactively alters an already-proposed/accepted version.
+- [x] State transitions (pre-funding only) — DRAFT/TERMS_PROPOSED/ACCEPTED/CANCELLED. `decline()` (only before acceptance) and `cancel()` (any party, any time before... well, any non-cancelled state, with a required reason) both transition to CANCELLED.
+- [ ] Funding-onward states (FUNDING_INSTRUCTIONS, VERIFIED_FUNDING, ACTIVE, FULFILMENT, RELEASE, COMPLETION), KYC/risk gating, and any ledger/payment integration — **deliberately not built**. Founder chose "non-financial scaffolding only" for this phase (2026-09-07) specifically to avoid inventing a money-handling flow before Open Decision #1 (payment provider) and the legal customer-funds structure are resolved. This is Phase 6 (Payments & Ledger) / Phase 7 (Trust/Completion) territory.
 - [ ] Live provider funding — **blocked**, requires legal/provider approval (see Open Decision #1)
 
 ## Confidential Rewards

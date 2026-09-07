@@ -739,3 +739,125 @@ model SubscriptionEntitlement {
 
   @@unique([planId, key])
 }
+
+// ---------- Standalone Escrow (Phase 5, non-financial scaffolding only) ----------
+// CLAUDE.md SS14-15: one Escrow Engine for deals from anywhere (origin is just a tag);
+// Marketplace-specific references are optional/nullable; material terms are versioned
+// and never secretly altered — a material amendment creates a new version requiring
+// full re-acceptance. Deliberately stops at ACCEPTED: no funding, no KYC/risk, no
+// ledger, no release/dispute. Those require Phase 6 (Payments & Ledger) and Phase 7
+// (Trust/Completion), and the production funds-flow legal/provider decision (Open
+// Decision #1) — building them now would mean inventing money-handling ahead of that
+// decision, which CLAUDE.md SS16/SS46 reserve for the founder. EscrowStatus below only
+// has the pre-funding states; funding-onward states are added in a later phase.
+// Reuses the generic AuditEvent log instead of a dedicated EscrowEvent table (same
+// simplification pattern already used for listing/buyer-request lifecycle events).
+
+enum EscrowOriginType {
+  DIRECT
+  MARKETPLACE
+  PARTNER
+  BUSINESS_API
+}
+
+enum EscrowStatus {
+  DRAFT
+  TERMS_PROPOSED
+  ACCEPTED
+  CANCELLED
+}
+
+enum EscrowPartyRole {
+  BUYER
+  SELLER
+}
+
+enum EscrowPartyStatus {
+  INVITED
+  ACCEPTED
+  DECLINED
+}
+
+enum EscrowFeeAllocation {
+  BUYER_PAYS
+  SELLER_PAYS
+  SHARED
+}
+
+model EscrowTransaction {
+  id                 String           @id @default(cuid())
+  originType         EscrowOriginType
+  originListingId    String? // context/traceability only when originType = MARKETPLACE; not validated against Listing here
+  createdByUserId    String
+  title              String
+  description        String?
+  currency           String           @default("NGN")
+  status             EscrowStatus     @default(DRAFT)
+  activeTermVersionId String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  cancelledAt        DateTime?
+  cancelReason       String?
+
+  parties      EscrowParty[]
+  termVersions EscrowTermVersion[]
+
+  @@index([createdByUserId])
+}
+
+model EscrowParty {
+  id         String            @id @default(cuid())
+  escrowId   String
+  escrow     EscrowTransaction @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  userId     String
+  role       EscrowPartyRole
+  status     EscrowPartyStatus @default(INVITED)
+  invitedAt  DateTime          @default(now())
+  respondedAt DateTime?
+
+  @@unique([escrowId, userId])
+  @@index([userId])
+}
+
+// Versioned transaction terms (CLAUDE.md SS14: "No party may secretly alter accepted
+// terms. A material amendment creates a new version requiring required acceptance
+// again."). feePercent is snapshotted from PlatformConfiguration at proposal time, not
+// read live later — a fee-config change must never retroactively alter an
+// already-proposed/accepted version's terms.
+model EscrowTermVersion {
+  id                       String              @id @default(cuid())
+  escrowId                 String
+  escrow                   EscrowTransaction   @relation(fields: [escrowId], references: [id], onDelete: Cascade)
+  version                  Int
+  transactionAmountMinorUnits BigInt
+  feePercent               Float
+  feeAllocation            EscrowFeeAllocation
+  buyerFeeSharePercent     Float? // only meaningful when feeAllocation = SHARED
+  proposedByUserId         String
+  createdAt                DateTime            @default(now())
+
+  conditions  EscrowCondition[]
+  acceptances EscrowAcceptance[]
+
+  @@unique([escrowId, version])
+}
+
+model EscrowCondition {
+  id            String            @id @default(cuid())
+  termVersionId String
+  termVersion   EscrowTermVersion @relation(fields: [termVersionId], references: [id], onDelete: Cascade)
+  description   String
+  displayOrder  Int               @default(0)
+
+  @@index([termVersionId])
+}
+
+model EscrowAcceptance {
+  id            String            @id @default(cuid())
+  termVersionId String
+  termVersion   EscrowTermVersion @relation(fields: [termVersionId], references: [id], onDelete: Cascade)
+  userId        String
+  acceptedAt    DateTime          @default(now())
+
+  @@unique([termVersionId, userId])
+}

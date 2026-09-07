@@ -17,6 +17,7 @@ import { BuyerRequestModule } from "./modules/buyer-request/buyer-request.module
 import { MatchingModule } from "./modules/matching/matching.module";
 import { EngagementModule } from "./modules/engagement/engagement.module";
 import { SubscriptionModule } from "./modules/subscription/subscription.module";
+import { EscrowModule } from "./modules/escrow/escrow.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -38,6 +39,7 @@ import { HealthController } from "./health/health.controller";
     MatchingModule,
     EngagementModule,
     SubscriptionModule,
+    EscrowModule,
   ],
   controllers: [HealthController],
 })
