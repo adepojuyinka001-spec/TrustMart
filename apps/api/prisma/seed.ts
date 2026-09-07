@@ -16,6 +16,9 @@ const PERMISSIONS = [
   { key: "platform_config:write", label: "Write platform configuration" },
   { key: "verification:review", label: "Review verification cases" },
   { key: "audit:read", label: "Read audit events" },
+  { key: "category:manage", label: "Manage categories, subcategories and attributes" },
+  { key: "listing:moderate", label: "Approve or reject submitted listings" },
+  { key: "matching:manage", label: "Manage matching profiles and weights" },
 ];
 
 // ADMIN gets every permission. Other roles get none by default in Shared Core —
@@ -62,6 +65,18 @@ const CONFIG_DEFAULTS: Array<{
     valueType: ConfigValueType.NUMBER,
     value: "2.5",
     description: "Current contemplated Escrow platform fee, percent of transaction value (SSOT SS4).",
+  },
+  {
+    key: "marketplace.match_budget_weight_percent",
+    valueType: ConfigValueType.NUMBER,
+    value: "25",
+    description: "Default weight of the budget criterion in matching, when the buyer marks budget as flexible.",
+  },
+  {
+    key: "marketplace.match_location_weight_percent",
+    valueType: ConfigValueType.NUMBER,
+    value: "25",
+    description: "Default weight of the location criterion in matching, when the buyer marks location as flexible.",
   },
 ];
 

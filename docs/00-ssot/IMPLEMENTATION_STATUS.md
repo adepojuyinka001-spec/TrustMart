@@ -10,7 +10,7 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [x] Next.js App Router app skeleton (`apps/web`) — branded placeholder page, verified in-browser (navy/gold/Montserrat render correctly).
 - [x] NestJS app skeleton (`apps/api`) — builds and type-checks cleanly.
 - [x] Prisma initialized — schema + seed script written, client generates successfully.
-- [x] Docker Compose (Postgres + n8n) file written — **not yet run**; Docker Desktop is not installed on this machine (see Open Decision below).
+- [x] Docker Compose (Postgres + n8n) file written — not run on this machine; local dev instead uses a portable, non-Docker PostgreSQL 18.6 on port 5433 (see `docs/00-ssot/DECISION_LOG.md`, 2026-09-07). n8n not yet running (no current dependency on it).
 
 ## Shared Core
 - [x] Identity/auth provider abstraction — `AuthProvider` interface + self-hosted `LocalAuthProvider` (bcryptjs + JWT), unit-tested.
@@ -21,13 +21,16 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [x] Audit — `AuditService` wired into every mutating Shared Core action.
 - [x] Consent / notification preferences — schema + endpoints written.
 - [x] Verification foundation — provider-agnostic `VerificationCase` shell written.
-- [ ] **Database-dependent verification pending**: `prisma migrate dev`, seed script run, and the full e2e test suite (`apps/api/test/app.e2e-spec.ts`) all require a live Postgres instance, which needs Docker Desktop installed locally first. Code has been type-checked, built, and covered by DB-independent unit tests (7/7 passing) in the meantime.
+- [x] **Database-dependent verification complete**: `prisma migrate dev --name init` applied against a live local Postgres; seed script run successfully (roles, permissions, default platform configuration); full e2e suite (`apps/api/test/app.e2e-spec.ts`) passes 4/4, including RBAC positive/negative and an audit-log assertion. All 24 unit tests also pass.
 
 ## Marketplace Core
-- [ ] Category / Dynamic Attribute Engine
-- [ ] Listing Engine
-- [ ] Buyer Request Engine
-- [ ] Matching Engine
+- [x] Category / Dynamic Attribute Engine — Category/Subcategory/AttributeDefinition/AttributeOption/CategoryAttribute CRUD, admin-gated (`category:manage`), public reads. Wired into `AppModule` and verified end-to-end (2026-09-07).
+- [x] Listing Engine — full DRAFT→SUBMITTED→CHECKING→ACTIVE lifecycle (approve/reject/mark-sold), price history, dynamic attribute values. Wired into `AppModule` and verified end-to-end.
+- [x] Buyer Request Engine — DRAFT→ACTIVE (explicit buyer confirmation) →CANCELLED, hard/preferred requirements. Wired into `AppModule` and verified end-to-end.
+- [x] Matching Engine — `MatchingEngineService` orchestrates the pure `evaluateMatch()` scorer against live listings/buyer-requests, persists `MatchRun`/`Match`/`MatchCriterionResult`, applies the configurable threshold (`marketplace.match_threshold_percent`, plus per-profile overrides), classifies results (Excellent/Strong/Good/Alternative), and emits a `marketplace.match.created` domain event via `EventEmitter2` the first time a pair newly qualifies. Versioned `MatchingProfile`/`MatchingCriterion` weights are admin-managed (`matching:manage`). Buyer- and seller-facing match views are ownership-scoped (sellers never see buyer budgets/requirements). Recalculation triggers wired from listing activation/price-change/approval and buyer-request activation/update.
+  - **Bug found and fixed in this pass**: Prisma `BigInt` money/budget fields (`askingPriceMinorUnits`, `minBudgetMinorUnits`, etc.) couldn't be JSON-serialized by Express — a `toJSON` polyfill existed but only ran in `main.ts`'s `bootstrap()`, so it never applied to e2e tests or any other entry point that constructs `AppModule` directly. Moved to a side-effect import (`src/bigint-json.polyfill.ts`) at the top of `app.module.ts` so it's always active. This bug had been latent since these modules were never previously registered in `AppModule`.
+  - Verified end-to-end (`apps/api/test/matching.e2e-spec.ts`): full category→subcategory→attribute→listing→buyer-request→match flow, hard-requirement disqualification, threshold qualification, seller-facing privacy (no buyer budget/requirement leakage), and RBAC positive/negative on both category management and matching-profile management. 7/7 e2e tests pass (4 pre-existing + 3 new), 24/24 unit tests pass.
+  - Seed data extended: `category:manage`, `listing:moderate`, `matching:manage` permissions (previously referenced by guards but never seeded — ADMIN would have silently lacked them); `marketplace.match_budget_weight_percent` / `marketplace.match_location_weight_percent` config defaults (25% each, mirroring the SSOT's illustrative Real Estate weight example).
 
 ## Interest / Contact / Subscription
 - [ ] Interest / Lead

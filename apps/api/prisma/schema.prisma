@@ -1,6 +1,7 @@
-// TrustMart Shared Core schema.
-// Scope: identity/auth, RBAC, platform configuration, audit, consent, verification.
-// Marketplace, Escrow, Rewards and Reviews entities are added in later, separately-approved phases.
+// TrustMart schema.
+// Phase 1 (Shared Core): identity/auth, RBAC, platform configuration, audit, consent, verification.
+// Phase 2 (Marketplace Core): Category/Attribute Engine, Listing Engine, Buyer Request Engine, Matching Engine.
+// Escrow, Rewards and Reviews entities are added in later, separately-approved phases.
 
 generator client {
   provider = "prisma-client-js"
@@ -28,15 +29,15 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  profile             Profile?
-  businessStaff       BusinessStaff[]
-  userRoles           UserRole[]
-  consents            Consent[]
-  whatsAppConsent     WhatsAppConsent?
-  notificationPref    NotificationPreference?
-  verificationCases   VerificationCase[]
-  refreshTokens       RefreshToken[]
-  auditEventsAsActor  AuditEvent[]            @relation("ActorAuditEvents")
+  profile            Profile?
+  businessStaff      BusinessStaff[]
+  userRoles          UserRole[]
+  consents           Consent[]
+  whatsAppConsent    WhatsAppConsent?
+  notificationPref   NotificationPreference?
+  verificationCases  VerificationCase[]
+  refreshTokens      RefreshToken[]
+  auditEventsAsActor AuditEvent[]            @relation("ActorAuditEvents")
 }
 
 model Profile {
@@ -247,4 +248,347 @@ model VerificationCase {
   notes       String?
   createdAt   DateTime                @default(now())
   updatedAt   DateTime                @updatedAt
+}
+
+// =========================================================================
+// Marketplace Core (Phase 2): Category/Attribute Engine, Listing Engine,
+// Buyer Request Engine, Matching Engine. Subscription/Contact/Escrow are
+// separate, later phases (CLAUDE.md SS4; Marketplace Blueprint SS3).
+//
+// Simplifications vs. the Blueprint's full entity list, recorded in
+// DECISION_LOG.md: listing/buyer-request lifecycle events reuse the
+// existing generic AuditEvent instead of dedicated *LifecycleEvent tables;
+// listing moderation reuses AuditEvent instead of a dedicated
+// ListingModerationCase table; media/document storage is out of scope for
+// this pass (no ListingMedia/ListingDocument yet).
+// =========================================================================
+
+// ---------- Category / Dynamic Attribute Engine ----------
+
+enum AttributeDataType {
+  STRING
+  NUMBER
+  BOOLEAN
+  ENUM
+  MULTI_ENUM
+}
+
+model Category {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  label        String
+  description  String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subcategories Subcategory[]
+}
+
+model Subcategory {
+  id           String   @id @default(cuid())
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  key          String
+  label        String
+  description  String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  attributes       CategoryAttribute[]
+  listings         Listing[]
+  buyerRequests    BuyerRequest[]
+  matchingProfiles MatchingProfile[]
+
+  @@unique([categoryId, key])
+}
+
+// Admin-configurable attribute metadata (Blueprint SS6): key, label, data type,
+// required/searchable/filterable/matchable/public live on CategoryAttribute
+// (per-subcategory) since the same attribute definition can be required in one
+// subcategory and optional in another.
+model AttributeDefinition {
+  id        String            @id @default(cuid())
+  key       String            @unique
+  label     String
+  dataType  AttributeDataType
+  unit      String?
+  isPublic  Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  options            AttributeOption[]
+  categoryAttributes CategoryAttribute[]
+  listingValues      ListingAttributeValue[]
+  buyerRequirements  BuyerRequirement[]
+  matchingCriteria   MatchingCriterion[]
+}
+
+model AttributeOption {
+  id           String              @id @default(cuid())
+  attributeId  String
+  attribute    AttributeDefinition @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  value        String
+  label        String
+  displayOrder Int                 @default(0)
+
+  @@unique([attributeId, value])
+}
+
+model CategoryAttribute {
+  id            String              @id @default(cuid())
+  subcategoryId String
+  subcategory   Subcategory         @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  attributeId   String
+  attribute     AttributeDefinition @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  required      Boolean             @default(false)
+  searchable    Boolean             @default(true)
+  filterable    Boolean             @default(true)
+  matchable     Boolean             @default(true)
+  displayOrder  Int                 @default(0)
+
+  @@unique([subcategoryId, attributeId])
+}
+
+// ---------- Listing Engine (seller inventory) ----------
+
+enum ListingCondition {
+  NEW
+  USED
+  REFURBISHED
+  NOT_APPLICABLE
+}
+
+// DRAFT -> SUBMITTED -> CHECKING -> ACTIVE -> EXPIRING -> EXPIRED, plus
+// SOLD / REJECTED / SUSPENDED / ARCHIVED (Blueprint SS12).
+enum ListingStatus {
+  DRAFT
+  SUBMITTED
+  CHECKING
+  ACTIVE
+  EXPIRING
+  EXPIRED
+  SOLD
+  REJECTED
+  SUSPENDED
+  ARCHIVED
+}
+
+model Listing {
+  id                    String           @id @default(cuid())
+  sellerUserId          String
+  businessId            String?
+  subcategoryId         String
+  subcategory           Subcategory      @relation(fields: [subcategoryId], references: [id])
+  title                 String
+  description           String
+  askingPriceMinorUnits BigInt
+  currency              String           @default("NGN")
+  negotiable            Boolean          @default(false)
+  condition             ListingCondition @default(NOT_APPLICABLE)
+  country               String?
+  state                 String?
+  city                  String?
+  quantity              Int              @default(1)
+  status                ListingStatus    @default(DRAFT)
+  moderationReason      String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  activatedAt           DateTime?
+  expiresAt             DateTime?
+  soldAt                DateTime?
+
+  attributeValues ListingAttributeValue[]
+  priceHistory    ListingPriceHistory[]
+  matches         Match[]
+
+  @@index([subcategoryId, status])
+  @@index([sellerUserId])
+}
+
+model ListingAttributeValue {
+  id          String              @id @default(cuid())
+  listingId   String
+  listing     Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  attributeId String
+  attribute   AttributeDefinition @relation(fields: [attributeId], references: [id])
+  value       String // serialized; parsed per attribute.dataType
+
+  @@unique([listingId, attributeId])
+}
+
+model ListingPriceHistory {
+  id                      String   @id @default(cuid())
+  listingId               String
+  listing                 Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  previousPriceMinorUnits BigInt
+  newPriceMinorUnits      BigInt
+  changedAt               DateTime @default(now())
+}
+
+// ---------- Buyer Request Engine (buyer demand) ----------
+
+enum BuyerRequestStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  FULFILLED
+  EXPIRED
+  CANCELLED
+}
+
+enum RequirementType {
+  HARD
+  PREFERRED
+}
+
+enum RequirementOperator {
+  EQUALS
+  NOT_EQUALS
+  GT
+  GTE
+  LT
+  LTE
+  IN
+  CONTAINS
+}
+
+// AI-parsed requests must be confirmed by the buyer before activation
+// (CLAUDE.md SS11; Blueprint SS8) — enforced by requiring an explicit
+// DRAFT -> ACTIVE transition through BuyerRequestService.activate().
+model BuyerRequest {
+  id                  String             @id @default(cuid())
+  buyerUserId         String
+  subcategoryId       String
+  subcategory         Subcategory        @relation(fields: [subcategoryId], references: [id])
+  minBudgetMinorUnits BigInt?
+  maxBudgetMinorUnits BigInt?
+  currency            String             @default("NGN")
+  preferredLocations  Json? // string[] of city/state names
+  quantity            Int                @default(1)
+  timelineDays        Int?
+  budgetFlexible      Boolean            @default(false)
+  locationFlexible    Boolean            @default(false)
+  status              BuyerRequestStatus @default(DRAFT)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  activatedAt         DateTime?
+
+  requirements BuyerRequirement[]
+  matches      Match[]
+
+  @@index([subcategoryId, status])
+  @@index([buyerUserId])
+}
+
+model BuyerRequirement {
+  id              String              @id @default(cuid())
+  buyerRequestId  String
+  buyerRequest    BuyerRequest        @relation(fields: [buyerRequestId], references: [id], onDelete: Cascade)
+  attributeId     String
+  attribute       AttributeDefinition @relation(fields: [attributeId], references: [id])
+  operator        RequirementOperator
+  value           String // serialized; parsed per attribute.dataType
+  requirementType RequirementType
+  weightOverride  Float?
+
+  @@unique([buyerRequestId, attributeId])
+}
+
+// ---------- Matching Engine ----------
+
+enum MatchTriggerReason {
+  LISTING_CREATED
+  LISTING_ACTIVATED
+  LISTING_PRICE_CHANGED
+  BUYER_REQUEST_ACTIVATED
+  BUYER_REQUEST_UPDATED
+  MATCHING_PROFILE_CHANGED
+  MANUAL_RECALCULATION
+}
+
+// A versioned, per-subcategory set of default attribute weights. Buyers may
+// override an individual weight via BuyerRequirement.weightOverride.
+model MatchingProfile {
+  id                       String      @id @default(cuid())
+  subcategoryId            String
+  subcategory              Subcategory @relation(fields: [subcategoryId], references: [id])
+  version                  Int         @default(1)
+  isActive                 Boolean     @default(true)
+  thresholdOverridePercent Float?
+  createdAt                DateTime    @default(now())
+
+  criteria MatchingCriterion[]
+  matches  Match[]
+
+  @@unique([subcategoryId, version])
+}
+
+model MatchingCriterion {
+  id                String              @id @default(cuid())
+  matchingProfileId String
+  matchingProfile   MatchingProfile     @relation(fields: [matchingProfileId], references: [id], onDelete: Cascade)
+  attributeId       String
+  attribute         AttributeDefinition @relation(fields: [attributeId], references: [id])
+  defaultWeight     Float
+
+  @@unique([matchingProfileId, attributeId])
+}
+
+model MatchRun {
+  id             String             @id @default(cuid())
+  triggerReason  MatchTriggerReason
+  listingId      String?
+  buyerRequestId String?
+  startedAt      DateTime           @default(now())
+  completedAt    DateTime?
+  matchesCreated Int                @default(0)
+
+  matches Match[]
+}
+
+// One current Match row per (buyerRequest, listing) pair — recalculation
+// upserts in place rather than accumulating history, matching Blueprint SS9's
+// "recalculate on ..." triggers.
+model Match {
+  id                   String           @id @default(cuid())
+  matchRunId           String
+  matchRun             MatchRun         @relation(fields: [matchRunId], references: [id], onDelete: Cascade)
+  buyerRequestId       String
+  buyerRequest         BuyerRequest     @relation(fields: [buyerRequestId], references: [id], onDelete: Cascade)
+  listingId            String
+  listing              Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  matchingProfileId    String?
+  matchingProfile      MatchingProfile? @relation(fields: [matchingProfileId], references: [id])
+  thresholdUsedPercent Float
+  scorePercent         Float
+  qualified            Boolean
+  hardFailed           Boolean
+  hardFailureReason    String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  criterionResults MatchCriterionResult[]
+
+  @@unique([buyerRequestId, listingId])
+  @@index([listingId])
+}
+
+model MatchCriterionResult {
+  id                    String               @id @default(cuid())
+  matchId               String
+  match                 Match                @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  criterionKey          String // attribute key, or built-in "BUDGET" / "LOCATION"
+  requirementType       RequirementType
+  operator              RequirementOperator?
+  buyerValue            String?
+  listingValue          String?
+  weight                Float
+  passed                Boolean
+  criterionScorePercent Float?
+
+  @@index([matchId])
 }
