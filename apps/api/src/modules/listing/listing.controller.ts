@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ListingService } from "./listing.service";
 import { ListingLifecycleService } from "./listing-lifecycle.service";
@@ -11,6 +12,7 @@ import { UpdateListingDto } from "./dto/update-listing.dto";
 import { UpdatePriceDto } from "./dto/update-price.dto";
 import { RejectListingDto } from "./dto/reject-listing.dto";
 
+@ApiTags("Listings")
 @Controller("listings")
 export class ListingController {
   constructor(

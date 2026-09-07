@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, ForbiddenException, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -9,6 +10,7 @@ import { MatchingProfileService } from "./matching-profile.service";
 import { CreateMatchingProfileDto } from "./dto/create-matching-profile.dto";
 import { classifyScore } from "./matching-engine.service";
 
+@ApiTags("Matching")
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class MatchingController {

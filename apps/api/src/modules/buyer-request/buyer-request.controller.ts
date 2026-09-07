@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { BuyerRequestService } from "./buyer-request.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -6,6 +7,7 @@ import type { AuthenticatedRequest, RequestUser } from "../identity/authenticate
 import { CreateBuyerRequestDto } from "./dto/create-buyer-request.dto";
 import { UpdateBuyerRequestDto } from "./dto/update-buyer-request.dto";
 
+@ApiTags("Buyer Requests")
 @Controller("buyer-requests")
 @UseGuards(JwtAuthGuard)
 export class BuyerRequestController {

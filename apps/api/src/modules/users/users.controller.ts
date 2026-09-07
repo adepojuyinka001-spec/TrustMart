@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Patch, Req, UseGuards } from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -5,6 +6,7 @@ import { CurrentUser } from "../identity/current-user.decorator";
 import type { AuthenticatedRequest, RequestUser } from "../identity/authenticated-request";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 
+@ApiTags("Users")
 @Controller("users")
 @UseGuards(JwtAuthGuard)
 export class UsersController {

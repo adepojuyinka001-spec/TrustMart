@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { LeadService } from "./lead.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -8,6 +9,7 @@ import type { AuthenticatedRequest, RequestUser } from "../identity/authenticate
 import { UpdateLeadStatusDto } from "./dto/update-lead-status.dto";
 import { ModerateLeadDto } from "./dto/moderate-lead.dto";
 
+@ApiTags("Leads")
 @Controller("leads")
 @UseGuards(JwtAuthGuard)
 export class LeadController {

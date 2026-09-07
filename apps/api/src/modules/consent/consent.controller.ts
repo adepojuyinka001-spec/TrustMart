@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Patch, Put, Req, UseGuards } from "@nestjs/common";
 import { ConsentService } from "./consent.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -6,6 +7,7 @@ import type { AuthenticatedRequest, RequestUser } from "../identity/authenticate
 import { SetConsentDto } from "./dto/set-consent.dto";
 import { UpdateNotificationPreferenceDto } from "./dto/update-notification-preference.dto";
 
+@ApiTags("Consent")
 @Controller("consent")
 @UseGuards(JwtAuthGuard)
 export class ConsentController {

@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { SubscriptionPlanService } from "./subscription-plan.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -9,6 +10,7 @@ import { CreateSubscriptionPlanDto } from "./dto/create-subscription-plan.dto";
 import { UpdateSubscriptionPlanDto } from "./dto/update-subscription-plan.dto";
 import { EntitlementDto } from "./dto/entitlement.dto";
 
+@ApiTags("Subscription Plans")
 @Controller("subscription-plans")
 export class SubscriptionPlanController {
   constructor(private readonly subscriptionPlanService: SubscriptionPlanService) {}

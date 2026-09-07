@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { VerificationService } from "./verification.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -8,6 +9,7 @@ import type { AuthenticatedRequest, RequestUser } from "../identity/authenticate
 import { CreateVerificationCaseDto } from "./dto/create-verification-case.dto";
 import { UpdateVerificationStatusDto } from "./dto/update-verification-status.dto";
 
+@ApiTags("Verification")
 @Controller("verification-cases")
 @UseGuards(JwtAuthGuard)
 export class VerificationController {

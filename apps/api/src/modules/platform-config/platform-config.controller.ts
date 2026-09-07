@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Put, Req, UseGuards } from "@nestjs/common";
 import { PlatformConfigService } from "./platform-config.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -7,6 +8,7 @@ import { CurrentUser } from "../identity/current-user.decorator";
 import type { AuthenticatedRequest, RequestUser } from "../identity/authenticated-request";
 import { UpsertConfigDto } from "./dto/upsert-config.dto";
 
+@ApiTags("Platform Config")
 @Controller("platform-config")
 @UseGuards(JwtAuthGuard, PermissionGuard)
 export class PlatformConfigController {

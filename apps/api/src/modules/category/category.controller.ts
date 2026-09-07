@@ -1,3 +1,4 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { CategoryService } from "./category.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
@@ -10,6 +11,7 @@ import { CreateSubcategoryDto } from "./dto/create-subcategory.dto";
 import { CreateAttributeDefinitionDto } from "./dto/create-attribute-definition.dto";
 import { LinkCategoryAttributeDto } from "./dto/link-category-attribute.dto";
 
+@ApiTags("Categories")
 @Controller()
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
