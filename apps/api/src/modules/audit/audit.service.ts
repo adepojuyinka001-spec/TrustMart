@@ -35,4 +35,21 @@ export class AuditService {
       orderBy: { createdAt: "desc" },
     });
   }
+
+  // Admin-facing browse (CLAUDE.md SS25: Admin Control Centre includes "audit"). No
+  // before/after diffing UI here — just filter + page through the append-only log.
+  async listRecent(filter: { resourceType?: string; action?: string }, page: { take: number; skip: number }) {
+    const [items, total] = await Promise.all([
+      this.prisma.auditEvent.findMany({
+        where: { resourceType: filter.resourceType, action: filter.action },
+        orderBy: { createdAt: "desc" },
+        take: page.take,
+        skip: page.skip,
+      }),
+      this.prisma.auditEvent.count({
+        where: { resourceType: filter.resourceType, action: filter.action },
+      }),
+    ]);
+    return { items, total };
+  }
 }

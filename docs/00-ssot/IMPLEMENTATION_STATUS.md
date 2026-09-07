@@ -65,5 +65,10 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [ ] Review request scheduling
 - [ ] Service-recovery case flow
 
+## Admin & Analytics (Phase 10, groundwork)
+- [x] Admin audit-event browsing — `GET /admin/audit-events` (filter by `resourceType`/`action`, paginated via `take`/`skip`), gated on `audit:read` (ADMIN/RISK_ANALYST/SUPPORT already had this permission seeded). Read-only over the existing append-only `AuditEvent` log.
+- [x] Admin analytics overview — `GET /admin/analytics/overview`, gated on a new `analytics:read` permission (ADMIN only). Aggregate counts across users, listings-by-status, buyer-requests-by-status, match totals/qualification rate, interests, leads-by-status, escrows-by-status, active subscription plans, and referrals-by-type. Deliberately simple counts/group-bys, not the full Marketplace funnel or Liquidity Intelligence (CLAUDE.md SS35/SS36) — those need event-timestamp analysis and geography/demand-supply breakdowns not wired yet. No financial figures (GMV, revenue) since nothing has completed/paid yet.
+- [ ] Full funnel analytics, Liquidity Intelligence, KYC/KYB admin queue, dispute/risk admin views, ledger/reconciliation views, CX/support tooling — not built; most depend on modules (Payments/Ledger, KYC provider, Escrow completion, Reviews) that don't exist yet.
+
 ## Cross-cutting
 - [x] Adversarial security review pass (2026-09-07, initial) — ran the `security-review` skill against the full diff of all 8 commits this session (Marketplace Core wiring, Matching Engine, Engagement, Subscription catalog, Escrow scaffolding, Marketplace-to-Escrow handoff, Swagger docs). Focused on IDOR/ownership checks on every resource-ID endpoint, buyer-budget/contact-data leakage to sellers, RBAC guard correctness, and injection vectors. **No high-confidence findings.** This is a scoped review of what exists so far (no payments/ledger/rewards/n8n/AI yet, so those categories in CLAUDE.md SS45 don't yet apply) — re-run after each future sensitive phase, per CLAUDE.md SS45, especially once Phase 6 (Payments & Ledger) introduces real money movement.

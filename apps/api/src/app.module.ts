@@ -19,6 +19,7 @@ import { EngagementModule } from "./modules/engagement/engagement.module";
 import { SubscriptionModule } from "./modules/subscription/subscription.module";
 import { EscrowModule } from "./modules/escrow/escrow.module";
 import { ReferralModule } from "./modules/referral/referral.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -42,6 +43,7 @@ import { HealthController } from "./health/health.controller";
     SubscriptionModule,
     EscrowModule,
     ReferralModule,
+    AnalyticsModule,
   ],
   controllers: [HealthController],
 })
