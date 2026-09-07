@@ -404,6 +404,8 @@ model Listing {
   attributeValues ListingAttributeValue[]
   priceHistory    ListingPriceHistory[]
   matches         Match[]
+  savedBy         SavedListing[]
+  interests       Interest[]
 
   @@index([subcategoryId, status])
   @@index([sellerUserId])
@@ -572,6 +574,7 @@ model Match {
   updatedAt            DateTime         @updatedAt
 
   criterionResults MatchCriterionResult[]
+  interests        Interest[]
 
   @@unique([buyerRequestId, listingId])
   @@index([listingId])
@@ -591,4 +594,100 @@ model MatchCriterionResult {
   criterionScorePercent Float?
 
   @@index([matchId])
+}
+
+// ---------- Engagement: Saved Listings, Interests, Contact Access, Leads ----------
+// Blueprint SS10-11; CLAUDE.md SS11/SS13. "I'm Interested" creates an Interest and a Lead
+// together. Contact access is gated on ALL of: subscription/entitlement (Subscription
+// module is a later, separately-approved phase — until it exists, this check fails
+// closed, so ContactAccessService.grantAccess() cannot currently succeed for anyone),
+// buyer consent (reuses the existing Consent model, type BUYER_CONTACT_SHARE), a valid
+// Interest/Lead context, server-side authorization (seller must own the listing), and an
+// audit record of every attempt — granted or denied.
+
+model SavedListing {
+  id          String   @id @default(cuid())
+  buyerUserId String
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([buyerUserId, listingId])
+}
+
+model Interest {
+  id          String   @id @default(cuid())
+  buyerUserId String
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  matchId     String?
+  match       Match?   @relation(fields: [matchId], references: [id])
+  message     String?
+  createdAt   DateTime @default(now())
+
+  lead Lead?
+
+  @@unique([buyerUserId, listingId])
+  @@index([listingId])
+}
+
+enum LeadStatus {
+  NEW
+  VIEWED
+  CONTACTED
+  INSPECTION_SCHEDULED
+  NEGOTIATING
+  TRANSACTION_STARTED
+  WON
+  LOST
+  SPAM_FRAUD
+}
+
+// One Lead per Interest (Blueprint: Match -> Interest -> Lead -> Contact/Inspection ->
+// Negotiation -> Transaction). SPAM_FRAUD is reachable only through a controlled
+// moderation/risk action, never a normal buyer/seller transition.
+model Lead {
+  id           String   @id @default(cuid())
+  interestId   String   @unique
+  interest     Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+  buyerUserId  String
+  sellerUserId String
+  listingId    String
+  status       LeadStatus @default(NEW)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  activities     LeadActivity[]
+  contactGrants  ContactAccessGrant[]
+
+  @@index([sellerUserId, status])
+  @@index([buyerUserId])
+}
+
+model LeadActivity {
+  id          String     @id @default(cuid())
+  leadId      String
+  lead        Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStatus  LeadStatus?
+  toStatus    LeadStatus
+  actorUserId String
+  note        String?
+  createdAt   DateTime   @default(now())
+
+  @@index([leadId])
+}
+
+// A record of every contact-access attempt on a Lead, granted or denied — the audit
+// trail CLAUDE.md SS13 requires in addition to the generic AuditEvent log.
+model ContactAccessGrant {
+  id           String   @id @default(cuid())
+  leadId       String
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  sellerUserId String
+  granted      Boolean
+  denialReason String?
+  channel      String? // e.g. WHATSAPP, PHONE, EMAIL — only set when granted
+  createdAt    DateTime @default(now())
+
+  @@index([leadId])
 }

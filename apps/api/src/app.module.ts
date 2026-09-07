@@ -15,6 +15,7 @@ import { CategoryModule } from "./modules/category/category.module";
 import { ListingModule } from "./modules/listing/listing.module";
 import { BuyerRequestModule } from "./modules/buyer-request/buyer-request.module";
 import { MatchingModule } from "./modules/matching/matching.module";
+import { EngagementModule } from "./modules/engagement/engagement.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -34,6 +35,7 @@ import { HealthController } from "./health/health.controller";
     ListingModule,
     BuyerRequestModule,
     MatchingModule,
+    EngagementModule,
   ],
   controllers: [HealthController],
 })

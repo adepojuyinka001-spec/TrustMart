@@ -33,9 +33,9 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
   - Seed data extended: `category:manage`, `listing:moderate`, `matching:manage` permissions (previously referenced by guards but never seeded — ADMIN would have silently lacked them); `marketplace.match_budget_weight_percent` / `marketplace.match_location_weight_percent` config defaults (25% each, mirroring the SSOT's illustrative Real Estate weight example).
 
 ## Interest / Contact / Subscription
-- [ ] Interest / Lead
-- [ ] Contact Consent / Access
-- [ ] Subscription Plan / Entitlement / Lifecycle
+- [x] Interest / Lead — `InterestService` ("I'm Interested" creates an Interest + its Lead atomically; blocks self-interest and duplicate interest on the same listing), `LeadService` (seller-driven status transitions NEW→VIEWED→CONTACTED→INSPECTION_SCHEDULED→NEGOTIATING→TRANSACTION_STARTED→WON/LOST, each recorded as a `LeadActivity`; WON/LOST/SPAM_FRAUD are terminal). SPAM_FRAUD is reachable only via the `lead:moderate` permission (RISK_ANALYST/ADMIN), never a normal seller action. Emits `marketplace.interest.created` / `marketplace.lead.status_changed` domain events.
+- [x] Contact Consent / Access — `ContactAccessService` enforces all 5 CLAUDE.md SS5/SS13 conditions; **deliberately fails closed** on the subscription/entitlement check (`hasActiveEntitlement()` always returns `false`) because Subscription/Entitlement doesn't exist yet (see below) — contact access cannot currently be granted to anyone, by design, not by omission. Every attempt (granted or denied) is recorded in both `ContactAccessGrant` and the generic `AuditEvent` log. Reuses the existing `ConsentService.hasGrantedConsent()` for buyer consent.
+- [ ] Subscription Plan / Entitlement / Lifecycle — not started. **This is what currently keeps contact access permanently denied**; wiring `ContactAccessService.hasActiveEntitlement()` to a real check is part of this future phase, not a follow-up bug fix.
 
 ## Standalone Escrow
 - [ ] Parties / versioned terms / acceptance

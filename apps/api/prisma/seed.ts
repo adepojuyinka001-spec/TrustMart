@@ -19,13 +19,14 @@ const PERMISSIONS = [
   { key: "category:manage", label: "Manage categories, subcategories and attributes" },
   { key: "listing:moderate", label: "Approve or reject submitted listings" },
   { key: "matching:manage", label: "Manage matching profiles and weights" },
+  { key: "lead:moderate", label: "Mark a lead as spam/fraud" },
 ];
 
 // ADMIN gets every permission. Other roles get none by default in Shared Core —
 // later phases (Marketplace, Escrow) grant module-specific permissions to SELLER/BUYER/etc.
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   ADMIN: PERMISSIONS.map((p) => p.key),
-  RISK_ANALYST: ["verification:review", "audit:read"],
+  RISK_ANALYST: ["verification:review", "audit:read", "lead:moderate"],
   SUPPORT: ["audit:read"],
 };
 
