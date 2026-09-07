@@ -26,6 +26,7 @@ model User {
   phone        String?    @unique
   passwordHash String
   status       UserStatus @default(ACTIVE)
+  referralCode String?    @unique
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -38,6 +39,8 @@ model User {
   verificationCases  VerificationCase[]
   refreshTokens      RefreshToken[]
   auditEventsAsActor AuditEvent[]            @relation("ActorAuditEvents")
+  referredBy         ReferralRelationship?   @relation("ReferredUser")
+  referralsMade      ReferralRelationship[]  @relation("ReferrerUser")
 }
 
 model Profile {
@@ -738,6 +741,33 @@ model SubscriptionEntitlement {
   createdAt DateTime         @default(now())
 
   @@unique([planId, key])
+}
+
+// ---------- Company Referral (Phase 8, non-financial part only) ----------
+// CLAUDE.md SS19: "No qualifying external referral => Company Referral. Do not leave
+// referral ownership null." Set exactly once, at registration, referencing a code from
+// an ALREADY-EXISTING user — self-referral and circular referral are structurally
+// impossible in this model, not just checked-for: a brand-new user has no referralCode
+// yet at the moment they'd need one to refer themselves, and no user can retroactively
+// change who referred them or whoever referred their referrer. Reward computation
+// (the confidential 0.3%/0.1%/0.1% policy) is NOT built here — it requires a completed,
+// funded Escrow transaction, which doesn't exist yet (Open Decision #1). This is
+// relationship tracking only.
+enum ReferralType {
+  USER
+  COMPANY
+}
+
+model ReferralRelationship {
+  id             String       @id @default(cuid())
+  referredUserId String       @unique
+  referredUser   User         @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+  referrerType   ReferralType
+  referrerUserId String?
+  referrerUser   User?        @relation("ReferrerUser", fields: [referrerUserId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([referrerUserId])
 }
 
 // ---------- Standalone Escrow (Phase 5, non-financial scaffolding only) ----------

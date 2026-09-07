@@ -53,10 +53,13 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 ## Developer tooling
 - [x] Live OpenAPI/Swagger docs — `SwaggerModule` wired into `main.ts` (dev-only, not gated; CLAUDE.md SS28 "REST/JSON; OpenAPI"), served at `/api-docs`. Every controller tagged with `@ApiTags` so the UI groups by module (Auth, Categories, Listings, Matching, Buyer Requests, Interests, Leads, Contact Access, Subscription Plans, Escrow, etc.) instead of one flat list. Added `trustmart-api` to `.claude/launch.json` (port 4000) alongside the existing `trustmart-web` entry. Requested by the founder to visually confirm session progress; verified live in-browser and via `read_page` (all 15 tagged groups present) — not just claimed. Revisit gating/auth on `/api-docs` before any real deployment.
 
-## Confidential Rewards
+## Referral / Rewards
+- [x] Company Referral (relationship tracking only) — `ReferralService.assignReferralOnRegistration()`: every new user gets a unique 8-character referral code (Crockford-style alphabet, no 0/O/1/I); if a valid code was supplied at registration, `ReferralRelationship.referrerType = USER` with the referrer linked, otherwise `COMPANY` (CLAUDE.md SS19: "No qualifying external referral => Company Referral. Do not leave referral ownership null." — never null, verified by test). Self-referral and circular referral are structurally impossible (a brand-new user has no code yet at the moment they'd need one to refer themselves; relationships are set exactly once and never retroactively edited), so no additional runtime check was needed for those two abuse vectors specifically. `GET /referrals/mine` returns own code, referrer type, and count of people referred.
+- [ ] Fake-account / fabricated-transaction / collusive-reward-farming detection — TrustGuard territory (Phase 7+), not built.
 - [ ] Internal versioned reward policy
 - [ ] Ledger-backed reward credit
 - [ ] Leakage tests (API/logs/DTOs)
+- [ ] Reward computation/payout — **blocked**: requires a completed, funded Escrow transaction, which requires Phase 6 (Payments & Ledger), which is blocked on Open Decision #1. Only the referral *relationship* is tracked so far, never a reward amount.
 
 ## Reviews
 - [ ] Review request scheduling

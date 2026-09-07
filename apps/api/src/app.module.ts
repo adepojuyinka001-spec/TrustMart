@@ -18,6 +18,7 @@ import { MatchingModule } from "./modules/matching/matching.module";
 import { EngagementModule } from "./modules/engagement/engagement.module";
 import { SubscriptionModule } from "./modules/subscription/subscription.module";
 import { EscrowModule } from "./modules/escrow/escrow.module";
+import { ReferralModule } from "./modules/referral/referral.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -40,6 +41,7 @@ import { HealthController } from "./health/health.controller";
     EngagementModule,
     SubscriptionModule,
     EscrowModule,
+    ReferralModule,
   ],
   controllers: [HealthController],
 })

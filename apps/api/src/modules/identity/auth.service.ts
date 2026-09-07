@@ -3,6 +3,7 @@ import { JwtService } from "@nestjs/jwt";
 import { createHash, randomUUID } from "node:crypto";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
+import { ReferralService } from "../referral/referral.service";
 import { parseDurationToMs } from "../../common/duration.util";
 import { AUTH_PROVIDER, type AuthProvider } from "./auth-provider.interface";
 import type { RegisterDto } from "./dto/register.dto";
@@ -24,6 +25,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
     private readonly auditService: AuditService,
+    private readonly referralService: ReferralService,
   ) {}
 
   async register(dto: RegisterDto, ipAddress?: string): Promise<AuthTokens> {
@@ -41,6 +43,10 @@ export class AuthService {
       resourceId: identity.userId,
       ipAddress,
     });
+
+    // Referral ownership is assigned regardless of which AuthProvider created the
+    // identity (CLAUDE.md SS19: never leave it null).
+    await this.referralService.assignReferralOnRegistration(identity.userId, dto.referralCode, ipAddress);
 
     return this.issueTokens(identity.userId, identity.email);
   }

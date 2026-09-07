@@ -6,9 +6,10 @@ import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./jwt.strategy";
 import { LocalAuthProvider } from "./local-auth.provider";
 import { AUTH_PROVIDER } from "./auth-provider.interface";
+import { ReferralModule } from "../referral/referral.module";
 
 @Module({
-  imports: [PassportModule, JwtModule.register({})],
+  imports: [PassportModule, JwtModule.register({}), ReferralModule],
   controllers: [AuthController],
   providers: [
     AuthService,

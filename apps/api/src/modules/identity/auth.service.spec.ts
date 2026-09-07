@@ -4,12 +4,14 @@ import { AuthService } from "./auth.service";
 import type { AuthProvider } from "./auth-provider.interface";
 import type { PrismaService } from "../../prisma/prisma.service";
 import type { AuditService } from "../audit/audit.service";
+import type { ReferralService } from "../referral/referral.service";
 
 describe("AuthService", () => {
   let authProvider: jest.Mocked<AuthProvider>;
   let jwtService: JwtService;
   let prisma: { refreshToken: { create: jest.Mock; findUnique: jest.Mock; update: jest.Mock } };
   let auditService: jest.Mocked<AuditService>;
+  let referralService: jest.Mocked<ReferralService>;
   let service: AuthService;
 
   beforeEach(() => {
@@ -26,11 +28,16 @@ describe("AuthService", () => {
       },
     };
     auditService = { record: jest.fn() } as unknown as jest.Mocked<AuditService>;
+    referralService = {
+      assignReferralOnRegistration: jest.fn().mockResolvedValue({}),
+      getMine: jest.fn(),
+    } as unknown as jest.Mocked<ReferralService>;
     service = new AuthService(
       authProvider,
       jwtService,
       prisma as unknown as PrismaService,
       auditService,
+      referralService,
     );
   });
 

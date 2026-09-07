@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from "class-validator";
+import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
 export class RegisterDto {
   @IsEmail()
@@ -15,4 +15,10 @@ export class RegisterDto {
   @IsString()
   @MinLength(1)
   lastName!: string;
+
+  // Unknown/invalid codes fall back to Company Referral rather than rejecting
+  // registration (CLAUDE.md SS19) — never a hard validation failure.
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }
