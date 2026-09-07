@@ -1,12 +1,15 @@
+import { ApiTags } from "@nestjs/swagger";
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { EscrowService } from "./escrow.service";
 import { JwtAuthGuard } from "../identity/jwt-auth.guard";
 import { CurrentUser } from "../identity/current-user.decorator";
 import type { AuthenticatedRequest, RequestUser } from "../identity/authenticated-request";
 import { CreateEscrowDto } from "./dto/create-escrow.dto";
+import { CreateEscrowFromLeadDto } from "./dto/create-escrow-from-lead.dto";
 import { ProposeAmendmentDto } from "./dto/propose-amendment.dto";
 import { CancelEscrowDto } from "./dto/cancel-escrow.dto";
 
+@ApiTags("Escrow")
 @Controller("escrows")
 @UseGuards(JwtAuthGuard)
 export class EscrowController {
@@ -25,6 +28,17 @@ export class EscrowController {
   @Post()
   create(@Body() dto: CreateEscrowDto, @CurrentUser() user: RequestUser, @Req() req: AuthenticatedRequest) {
     return this.escrowService.create(user.userId, dto, req.ip);
+  }
+
+  // The Marketplace -> Optional Escrow handoff ("Secure This Deal With TrustMart Escrow").
+  @Post("from-lead/:leadId")
+  createFromLead(
+    @Param("leadId") leadId: string,
+    @Body() dto: CreateEscrowFromLeadDto,
+    @CurrentUser() user: RequestUser,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.escrowService.createFromLead(leadId, user.userId, dto, req.ip);
   }
 
   @Post(":id/amend")

@@ -1,11 +1,12 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { EscrowPartyRole, EscrowPartyStatus, EscrowStatus } from "@prisma/client";
+import { EscrowOriginType, EscrowPartyRole, EscrowPartyStatus, EscrowStatus } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { PlatformConfigService } from "../platform-config/platform-config.service";
 import type { CreateEscrowDto } from "./dto/create-escrow.dto";
 import type { ProposeAmendmentDto } from "./dto/propose-amendment.dto";
+import type { CreateEscrowFromLeadDto } from "./dto/create-escrow-from-lead.dto";
 
 // Standalone Escrow, non-financial scaffolding (CLAUDE.md SS14-15). See the schema-level
 // comment on EscrowTransaction for the full scope boundary — this service never touches
@@ -106,6 +107,51 @@ export class EscrowService {
     this.eventEmitter.emit("escrow.created", { escrowId: escrow.id, originType: dto.originType });
 
     return this.get(escrow.id, creatorUserId);
+  }
+
+  // Marketplace -> Optional Escrow handoff (CLAUDE.md SS4/SS9: "Secure This Deal With
+  // TrustMart Escrow"). Prefills origin/counterparty/amount from an existing Lead, but
+  // this is still just a DRAFT proposal through the normal create() path below — the
+  // counterparty must still explicitly accept, same as any other escrow. Never silently
+  // converts Marketplace data into binding terms.
+  async createFromLead(leadId: string, initiatorUserId: string, dto: CreateEscrowFromLeadDto, ipAddress?: string) {
+    const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) {
+      throw new NotFoundException("Lead not found.");
+    }
+    if (lead.buyerUserId !== initiatorUserId && lead.sellerUserId !== initiatorUserId) {
+      throw new ForbiddenException("You are not a party to this lead.");
+    }
+
+    const listing = await this.prisma.listing.findUnique({ where: { id: lead.listingId } });
+    if (!listing) {
+      throw new NotFoundException("The listing behind this lead no longer exists.");
+    }
+
+    const initiatorIsBuyer = initiatorUserId === lead.buyerUserId;
+    const counterpartyUserId = initiatorIsBuyer ? lead.sellerUserId : lead.buyerUserId;
+
+    const createDto: CreateEscrowDto = {
+      originType: EscrowOriginType.MARKETPLACE,
+      originListingId: listing.id,
+      title: listing.title,
+      description: `Escrow for lead ${lead.id}, listing "${listing.title}".`,
+      currency: listing.currency,
+      creatorRole: initiatorIsBuyer ? EscrowPartyRole.BUYER : EscrowPartyRole.SELLER,
+      invitedParties: [
+        { userId: counterpartyUserId, role: initiatorIsBuyer ? EscrowPartyRole.SELLER : EscrowPartyRole.BUYER },
+      ],
+      transactionAmountMinorUnits: dto.transactionAmountMinorUnits ?? Number(listing.askingPriceMinorUnits),
+      feeAllocation: dto.feeAllocation,
+      buyerFeeSharePercent: dto.buyerFeeSharePercent,
+      conditions: dto.conditions,
+    };
+
+    const escrow = await this.create(initiatorUserId, createDto, ipAddress);
+
+    this.eventEmitter.emit("escrow.draft_created_from_marketplace", { escrowId: escrow.id, leadId });
+
+    return escrow;
   }
 
   async proposeAmendment(escrowId: string, proposerUserId: string, dto: ProposeAmendmentDto, ipAddress?: string) {

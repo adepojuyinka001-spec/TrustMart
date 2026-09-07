@@ -47,6 +47,12 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [ ] Funding-onward states (FUNDING_INSTRUCTIONS, VERIFIED_FUNDING, ACTIVE, FULFILMENT, RELEASE, COMPLETION), KYC/risk gating, and any ledger/payment integration — **deliberately not built**. Founder chose "non-financial scaffolding only" for this phase (2026-09-07) specifically to avoid inventing a money-handling flow before Open Decision #1 (payment provider) and the legal customer-funds structure are resolved. This is Phase 6 (Payments & Ledger) / Phase 7 (Trust/Completion) territory.
 - [ ] Live provider funding — **blocked**, requires legal/provider approval (see Open Decision #1)
 
+## Marketplace -> Optional Escrow (Phase 9)
+- [x] Escrow demo/CTA prefill / DRAFT handoff — `EscrowService.createFromLead()` (`POST /escrows/from-lead/:leadId`): prefills origin (MARKETPLACE), listing reference, title/description/currency, and a default transaction amount (the listing's current asking price, overridable) from an existing Lead. Only a party to the Lead may initiate. Delegates to the same `create()` path as any other escrow, so the counterparty must still explicitly accept — the handoff never silently converts Marketplace data into binding terms (CLAUDE.md SS4). Emits `escrow.draft_created_from_marketplace`.
+
+## Developer tooling
+- [x] Live OpenAPI/Swagger docs — `SwaggerModule` wired into `main.ts` (dev-only, not gated; CLAUDE.md SS28 "REST/JSON; OpenAPI"), served at `/api-docs`. Every controller tagged with `@ApiTags` so the UI groups by module (Auth, Categories, Listings, Matching, Buyer Requests, Interests, Leads, Contact Access, Subscription Plans, Escrow, etc.) instead of one flat list. Added `trustmart-api` to `.claude/launch.json` (port 4000) alongside the existing `trustmart-web` entry. Requested by the founder to visually confirm session progress; verified live in-browser and via `read_page` (all 15 tagged groups present) — not just claimed. Revisit gating/auth on `/api-docs` before any real deployment.
+
 ## Confidential Rewards
 - [ ] Internal versioned reward policy
 - [ ] Ledger-backed reward credit
