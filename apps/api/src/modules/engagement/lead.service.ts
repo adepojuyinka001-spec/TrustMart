@@ -110,4 +110,38 @@ export class LeadService {
       orderBy: { updatedAt: "desc" },
     });
   }
+
+  // Moderator/admin browse (CLAUDE.md SS11: SPAM_FRAUD "must use a controlled
+  // moderation/risk process"). The `lead:moderate`-gated POST .../spam-fraud endpoint has
+  // existed since Engagement, but a moderator who isn't a party to a lead had no way to
+  // ever discover or view one — the ordinary `get()` above 403s anyone who isn't the
+  // buyer/seller, and there was no list endpoint at all. Found while auditing what admin
+  // permissions actually have working UI paths.
+  async listForModeration(filter: { status?: LeadStatus }, page: { take: number; skip: number }) {
+    const [items, total] = await Promise.all([
+      this.prisma.lead.findMany({
+        where: { status: filter.status },
+        orderBy: { createdAt: "desc" },
+        take: page.take,
+        skip: page.skip,
+        include: { interest: { include: { listing: { select: { title: true } } } } },
+      }),
+      this.prisma.lead.count({ where: { status: filter.status } }),
+    ]);
+    return { items, total };
+  }
+
+  async getForModeration(leadId: string) {
+    const lead = await this.prisma.lead.findUnique({
+      where: { id: leadId },
+      include: {
+        activities: { orderBy: { createdAt: "asc" } },
+        interest: { include: { listing: { select: { title: true } } } },
+      },
+    });
+    if (!lead) {
+      throw new NotFoundException("Lead not found.");
+    }
+    return lead;
+  }
 }

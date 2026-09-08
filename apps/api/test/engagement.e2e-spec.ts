@@ -220,4 +220,53 @@ describe("TrustMart Engagement (e2e)", () => {
       .send({ status: "CONTACTED" });
     expect(afterTerminal.status).toBe(403);
   });
+
+  // Regression: LeadController's GET /leads/:id 403s anyone who isn't the buyer/seller —
+  // including an admin holding lead:moderate, since they're not a party either. Before
+  // this admin-scoped read path existed, the moderate/spam-fraud endpoint had no
+  // legitimate way to be reached: nothing let a moderator discover or inspect a lead they
+  // weren't already a party to.
+  it("lets an admin (not a party to the lead) list and view leads for moderation, unlike the ordinary party-scoped endpoint", async () => {
+    const httpServer = app.getHttpServer();
+    const suffix = Date.now();
+    const sellerToken = await register(`seller+adminlead+${suffix}@example.com`);
+    const buyerToken = await register(`buyer+adminlead+${suffix}@example.com`);
+
+    const listingRes = await request(httpServer).post("/listings").set("Authorization", `Bearer ${sellerToken}`).send({
+      subcategoryId,
+      title: "Admin lead visibility test listing",
+      description: "A listing to test admin lead moderation visibility.",
+      askingPriceMinorUnits: 1_000_000,
+    });
+    const listingId = listingRes.body.id as string;
+    await request(httpServer).post(`/listings/${listingId}/submit`).set("Authorization", `Bearer ${sellerToken}`);
+    await request(httpServer).post(`/listings/${listingId}/approve`).set("Authorization", `Bearer ${adminToken}`);
+    await request(httpServer).post("/interests").set("Authorization", `Bearer ${buyerToken}`).send({ listingId });
+    const interests = await request(httpServer)
+      .get(`/listings/${listingId}/interests`)
+      .set("Authorization", `Bearer ${sellerToken}`);
+    const leadId = interests.body[0].lead.id as string;
+
+    // The ordinary endpoint still correctly 403s the admin — they're not a party.
+    const ordinaryGetForbidden = await request(httpServer).get(`/leads/${leadId}`).set("Authorization", `Bearer ${adminToken}`);
+    expect(ordinaryGetForbidden.status).toBe(403);
+
+    // A non-admin gets 403 from the admin-scoped endpoints too (RBAC negative).
+    const forbiddenList = await request(httpServer).get("/admin/leads").set("Authorization", `Bearer ${sellerToken}`);
+    expect(forbiddenList.status).toBe(403);
+    const forbiddenGet = await request(httpServer).get(`/admin/leads/${leadId}`).set("Authorization", `Bearer ${sellerToken}`);
+    expect(forbiddenGet.status).toBe(403);
+
+    const list = await request(httpServer)
+      .get("/admin/leads")
+      .query({ status: "NEW", take: 100 })
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(list.status).toBe(200);
+    expect(list.body.items.some((l: { id: string }) => l.id === leadId)).toBe(true);
+
+    const detail = await request(httpServer).get(`/admin/leads/${leadId}`).set("Authorization", `Bearer ${adminToken}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.id).toBe(leadId);
+    expect(detail.body.interest.listing.title).toBe("Admin lead visibility test listing");
+  });
 });

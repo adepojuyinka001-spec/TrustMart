@@ -56,6 +56,7 @@ const ADMIN_SECTION: {
     { href: "/admin/audit", label: "Audit Log", icon: ClipboardIcon, permission: "audit:read" },
     { href: "/admin/categories", label: "Categories", icon: TagIcon, permission: "category:manage" },
     { href: "/admin/listings", label: "Listing Moderation", icon: ShopIcon, permission: "listing:moderate" },
+    { href: "/admin/leads", label: "Lead Moderation", icon: UsersIcon, permission: "lead:moderate" },
     { href: "/admin/config", label: "Platform Config", icon: SettingsIcon, permission: "platform_config:read" },
     { href: "/admin/subscriptions", label: "Subscription Plans", icon: StarIcon, permission: "subscription:manage" },
   ],

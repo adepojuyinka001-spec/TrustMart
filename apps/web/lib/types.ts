@@ -130,6 +130,7 @@ export interface Lead {
   createdAt: string;
   updatedAt: string;
   activities?: { id: string; toStatus: string; note?: string | null; createdAt: string }[];
+  interest?: { listing?: { title: string } };
 }
 
 export interface EscrowParty {
