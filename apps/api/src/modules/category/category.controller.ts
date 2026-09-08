@@ -27,6 +27,13 @@ export class CategoryController {
     return this.categoryService.getSubcategoryWithAttributes(id);
   }
 
+  @Get("attribute-definitions")
+  @UseGuards(JwtAuthGuard, PermissionGuard)
+  @RequirePermission("category:manage")
+  listAttributeDefinitions() {
+    return this.categoryService.listAttributeDefinitions();
+  }
+
   @Post("categories")
   @UseGuards(JwtAuthGuard, PermissionGuard)
   @RequirePermission("category:manage")

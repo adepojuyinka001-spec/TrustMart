@@ -36,6 +36,9 @@ export interface AttributeDefinition {
 export interface CategoryAttribute {
   id: string;
   required: boolean;
+  searchable?: boolean;
+  filterable?: boolean;
+  matchable?: boolean;
   attribute: AttributeDefinition;
 }
 
@@ -50,6 +53,14 @@ export interface Category {
   key: string;
   label: string;
   subcategories: Subcategory[];
+}
+
+export interface SubcategoryDetail {
+  id: string;
+  key: string;
+  label: string;
+  category: { id: string; key: string; label: string };
+  attributes: CategoryAttribute[];
 }
 
 export interface Listing {

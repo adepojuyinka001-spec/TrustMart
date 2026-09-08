@@ -111,6 +111,18 @@ export class CategoryService {
     return link;
   }
 
+  // Admin-only convenience so the management UI can offer reusing an existing attribute
+  // (e.g. "bedrooms" across both Duplex and Apartment) instead of only ever creating a
+  // new one per link. The data itself isn't sensitive (attribute keys/labels are already
+  // publicly visible via getSubcategoryWithAttributes), gated here only because it's part
+  // of the category:manage admin flow, not because it needs hiding.
+  async listAttributeDefinitions() {
+    return this.prisma.attributeDefinition.findMany({
+      orderBy: { label: "asc" },
+      include: { options: true },
+    });
+  }
+
   async listCategories() {
     return this.prisma.category.findMany({
       where: { isActive: true },
