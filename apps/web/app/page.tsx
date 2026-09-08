@@ -15,7 +15,6 @@ import {
   LockIcon,
   SearchIcon,
   ShieldIcon,
-  ShopIcon,
   UsersIcon,
 } from "../components/icons";
 
@@ -115,25 +114,26 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Illustrative panel standing in for the brand mockup's phone photography */}
-            <div className="relative mx-auto flex w-full max-w-sm items-center justify-center py-6">
-              <div className="absolute h-72 w-72 rounded-full bg-tm-gold/10 blur-3xl" />
-              <div className="relative flex flex-col items-center gap-6 rounded-3xl border border-tm-white/15 bg-tm-white/5 p-10 backdrop-blur-sm">
-                <Image src="/tm-icon.png" alt="TrustMart" width={120} height={120} className="rounded-2xl shadow-2xl" />
-                <div className="flex items-center gap-2 rounded-full bg-tm-white/10 px-4 py-2 text-xs font-medium text-tm-white/90">
-                  <ShopIcon className="h-4 w-4 text-tm-gold" /> Find it. Buy it.
-                </div>
-                <div className="flex items-center gap-2 rounded-full bg-tm-white/10 px-4 py-2 text-xs font-medium text-tm-white/90">
-                  <ArrowRightIcon className="h-4 w-4 text-tm-gold" /> List it. Sell it.
-                </div>
-                <div className="flex items-center gap-3 rounded-xl bg-tm-white px-4 py-3 text-tm-dark shadow-xl">
-                  <LockIcon className="h-8 w-8 rounded-lg bg-tm-navy p-1.5 text-tm-white" />
-                  <div className="text-left">
-                    <p className="text-sm font-bold leading-tight">Secure it.</p>
-                    <p className="text-xs leading-tight text-tm-dark/60">With TrustMart Escrow.</p>
-                  </div>
-                  <CheckCircleIcon className="h-6 w-6 text-emerald-500" />
-                </div>
+            {/* Official brand hero photography, vignette-masked so its edges dissolve into
+                the section's own navy gradient instead of sitting in a hard-edged box. */}
+            <div className="relative mx-auto -my-6 w-full max-w-xl lg:-my-10 lg:max-w-none">
+              <div
+                className="relative aspect-[6/4.6] w-full"
+                style={{
+                  maskImage:
+                    "radial-gradient(ellipse 78% 78% at 55% 50%, black 52%, transparent 88%)",
+                  WebkitMaskImage:
+                    "radial-gradient(ellipse 78% 78% at 55% 50%, black 52%, transparent 88%)",
+                }}
+              >
+                <Image
+                  src="/tm-hero-artwork.jpg"
+                  alt="A buyer and a seller trading confidently on their phones, protected by TrustMart Escrow"
+                  fill
+                  priority
+                  className="object-cover object-center"
+                  sizes="(min-width: 1024px) 50vw, 90vw"
+                />
               </div>
             </div>
           </div>
