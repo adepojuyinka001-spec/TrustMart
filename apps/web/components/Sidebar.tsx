@@ -8,6 +8,7 @@ import { useAuth } from "../lib/auth-context";
 import { useMobileNav } from "../lib/mobile-nav-context";
 import {
   BoxIcon,
+  CheckCircleIcon,
   ClipboardIcon,
   LogoutIcon,
   HomeIcon,
@@ -59,6 +60,7 @@ const ADMIN_SECTION: {
     { href: "/admin/leads", label: "Lead Moderation", icon: UsersIcon, permission: "lead:moderate" },
     { href: "/admin/config", label: "Platform Config", icon: SettingsIcon, permission: "platform_config:read" },
     { href: "/admin/subscriptions", label: "Subscription Plans", icon: StarIcon, permission: "subscription:manage" },
+    { href: "/admin/verification", label: "Verification", icon: CheckCircleIcon, permission: "verification:review" },
   ],
 };
 

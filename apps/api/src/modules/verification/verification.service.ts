@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { VerificationSubjectType } from "@prisma/client";
+import { VerificationSubjectType, VerificationStatus } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import type { CreateVerificationCaseDto } from "./dto/create-verification-case.dto";
@@ -62,5 +62,31 @@ export class VerificationService {
 
   async listForUser(userId: string) {
     return this.prisma.verificationCase.findMany({ where: { userId } });
+  }
+
+  // Reviewer browse (`verification:review`). Same shape as the Lead moderation gap fixed
+  // the same day: `updateStatus()` above has never had an ownership check (correctly — a
+  // reviewer isn't the subject), but there was no way for a reviewer to ever discover a
+  // case to review it. `listForUser()` above is scoped to the subject for a reason and
+  // must not be reused here.
+  async listForReview(filter: { status?: VerificationStatus }, page: { take: number; skip: number }) {
+    const [items, total] = await Promise.all([
+      this.prisma.verificationCase.findMany({
+        where: { status: filter.status },
+        orderBy: { createdAt: "desc" },
+        take: page.take,
+        skip: page.skip,
+        include: { user: { select: { email: true } }, business: { select: { name: true } } },
+      }),
+      this.prisma.verificationCase.count({ where: { status: filter.status } }),
+    ]);
+    return { items, total };
+  }
+
+  async getForReview(caseId: string) {
+    return this.prisma.verificationCase.findUniqueOrThrow({
+      where: { id: caseId },
+      include: { user: { select: { email: true } }, business: { select: { name: true } } },
+    });
   }
 }

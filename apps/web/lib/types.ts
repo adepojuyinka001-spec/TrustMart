@@ -121,6 +121,17 @@ export interface Interest {
   lead?: Lead;
 }
 
+export interface VerificationCase {
+  id: string;
+  subjectType: "USER" | "BUSINESS";
+  status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "MORE_INFO_REQUIRED";
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: { email: string } | null;
+  business?: { name: string } | null;
+}
+
 export interface Lead {
   id: string;
   buyerUserId: string;
