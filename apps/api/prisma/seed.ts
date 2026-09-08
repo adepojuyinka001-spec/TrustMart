@@ -1,4 +1,5 @@
-import { PrismaClient, ConfigValueType, BillingPeriod } from "@prisma/client";
+import { PrismaClient, ConfigValueType, BillingPeriod, ListingStatus } from "@prisma/client";
+import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -260,6 +261,83 @@ async function main() {
         });
       }
     }
+  }
+
+  // Demo seller + a couple of real ACTIVE listings, so the Marketplace has genuine
+  // browsable content out of the box instead of an empty grid. Login:
+  // demo.seller@trustmart.ng / Demo12345! (dev-only; never a real credential).
+  const demoPasswordHash = await bcrypt.hash("Demo12345!", 12);
+  const demoSeller = await prisma.user.upsert({
+    where: { email: "demo.seller@trustmart.ng" },
+    update: {},
+    create: {
+      email: "demo.seller@trustmart.ng",
+      passwordHash: demoPasswordHash,
+      profile: { create: { firstName: "Demo", lastName: "Seller" } },
+    },
+  });
+
+  const duplexSub = await prisma.subcategory.findFirst({ where: { key: "duplex", category: { key: "real-estate" } } });
+  const sedanSub = await prisma.subcategory.findFirst({ where: { key: "sedan", category: { key: "vehicles" } } });
+  const bedroomsAttr = await prisma.attributeDefinition.findUnique({ where: { key: "bedrooms" } });
+  const yearAttr = await prisma.attributeDefinition.findUnique({ where: { key: "year" } });
+
+  const DEMO_LISTINGS: Array<{
+    subcategoryId?: string;
+    title: string;
+    description: string;
+    priceMinorUnits: bigint;
+    city: string;
+    state: string;
+    attributeId?: string;
+    attributeValue?: string;
+  }> = [
+    {
+      subcategoryId: duplexSub?.id,
+      title: "4 Bedroom Duplex",
+      description: "Spacious fully-detached duplex with a modern finish, secure estate, 24/7 power.",
+      priceMinorUnits: 12_000_000_000n, // NGN 120,000,000
+      city: "Lekki Phase 1",
+      state: "Lagos",
+      attributeId: bedroomsAttr?.id,
+      attributeValue: "4",
+    },
+    {
+      subcategoryId: sedanSub?.id,
+      title: "Toyota Camry 2020",
+      description: "Foreign-used, accident-free, full option. Recently serviced.",
+      priceMinorUnits: 980_000_000n, // NGN 9,800,000
+      city: "Lekki",
+      state: "Lagos",
+      attributeId: yearAttr?.id,
+      attributeValue: "2020",
+    },
+  ];
+
+  for (const demo of DEMO_LISTINGS) {
+    if (!demo.subcategoryId) continue;
+    const existing = await prisma.listing.findFirst({ where: { title: demo.title, sellerUserId: demoSeller.id } });
+    if (existing) continue;
+    await prisma.listing.create({
+      data: {
+        sellerUserId: demoSeller.id,
+        subcategoryId: demo.subcategoryId,
+        title: demo.title,
+        description: demo.description,
+        askingPriceMinorUnits: demo.priceMinorUnits,
+        currency: "NGN",
+        country: "Nigeria",
+        state: demo.state,
+        city: demo.city,
+        status: ListingStatus.ACTIVE,
+        activatedAt: new Date(),
+        expiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        attributeValues:
+          demo.attributeId && demo.attributeValue
+            ? { create: [{ attributeId: demo.attributeId, value: demo.attributeValue }] }
+            : undefined,
+      },
+    });
   }
 
   for (const plan of SUBSCRIPTION_PLANS) {

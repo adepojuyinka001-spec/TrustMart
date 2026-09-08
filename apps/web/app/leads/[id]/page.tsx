@@ -7,6 +7,7 @@ import type { Lead } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { RequireAuth } from "../../../components/RequireAuth";
 import { StatusBadge } from "../../../components/StatusBadge";
+import { Topbar } from "../../../components/Topbar";
 
 const SELLER_STATUSES = ["VIEWED", "CONTACTED", "INSPECTION_SCHEDULED", "NEGOTIATING", "TRANSACTION_STARTED", "WON", "LOST"];
 
@@ -83,15 +84,28 @@ function LeadDetail() {
     }
   }
 
-  if (loading) return <main className="mx-auto max-w-2xl px-6 py-10 text-sm text-tm-dark/60">Loading…</main>;
-  if (!lead) return <main className="mx-auto max-w-2xl px-6 py-10 text-sm text-red-600">Lead not found.</main>;
+  if (loading)
+    return (
+      <>
+        <Topbar title="Lead" />
+        <main className="flex-1 p-6 text-sm text-tm-dark/60">Loading…</main>
+      </>
+    );
+  if (!lead)
+    return (
+      <>
+        <Topbar title="Lead" />
+        <main className="flex-1 p-6 text-sm text-red-600">Lead not found.</main>
+      </>
+    );
 
   const isTerminal = ["WON", "LOST", "SPAM_FRAUD"].includes(lead.status);
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-tm-navy">Lead #{lead.id.slice(-8)}</h1>
+    <>
+      <Topbar title={`Lead #${lead.id.slice(-8)}`} />
+      <main className="mx-auto max-w-2xl flex-1 p-6">
+      <div className="flex items-center justify-end">
         <StatusBadge status={lead.status} />
       </div>
 
@@ -154,7 +168,8 @@ function LeadDetail() {
           </ul>
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

@@ -8,6 +8,68 @@ import type { Escrow } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { RequireAuth } from "../../../components/RequireAuth";
 import { StatusBadge } from "../../../components/StatusBadge";
+import { Topbar } from "../../../components/Topbar";
+
+const STEPS = ["Created", "Terms Accepted", "Funding", "Completed"] as const;
+
+function currentStepIndex(status: Escrow["status"]): number {
+  switch (status) {
+    case "DRAFT":
+    case "TERMS_PROPOSED":
+      return 1;
+    case "ACCEPTED":
+      return 2;
+    case "CANCELLED":
+      return -1;
+    default:
+      return 0;
+  }
+}
+
+function StepTracker({ status }: { status: Escrow["status"] }) {
+  if (status === "CANCELLED") {
+    return (
+      <div className="tm-card mb-6 border-red-200 bg-red-50 text-sm font-medium text-red-700">
+        This escrow was cancelled — the step tracker no longer applies.
+      </div>
+    );
+  }
+  const current = currentStepIndex(status);
+  return (
+    <div className="tm-card mb-6">
+      <div className="flex items-center">
+        {STEPS.map((step, i) => {
+          const done = i < current;
+          const active = i === current;
+          return (
+            <div key={step} className="flex flex-1 items-center last:flex-none">
+              <div className="flex flex-col items-center gap-1.5">
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-bold ${
+                    done
+                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      : active
+                        ? "border-tm-navy bg-tm-navy text-white"
+                        : "border-tm-navy/20 bg-white text-tm-dark/30"
+                  }`}
+                >
+                  {done ? "✓" : i + 1}
+                </div>
+                <span className={`text-center text-[11px] font-medium ${active ? "text-tm-navy" : "text-tm-dark/50"}`}>{step}</span>
+              </div>
+              {i < STEPS.length - 1 && <div className={`mx-2 h-0.5 flex-1 ${done ? "bg-emerald-500" : "bg-tm-navy/15"}`} />}
+            </div>
+          );
+        })}
+      </div>
+      {current === 2 && (
+        <p className="mt-4 rounded-md bg-tm-gold/10 px-3 py-2 text-xs text-tm-dark/70">
+          Terms are accepted — funding isn't available yet on TrustMart (pending a payment-provider decision).
+        </p>
+      )}
+    </div>
+  );
+}
 
 function EscrowDetail() {
   const { id } = useParams<{ id: string }>();
@@ -72,8 +134,20 @@ function EscrowDetail() {
     }
   }
 
-  if (loading) return <main className="mx-auto max-w-2xl px-6 py-10 text-sm text-tm-dark/60">Loading…</main>;
-  if (!escrow) return <main className="mx-auto max-w-2xl px-6 py-10 text-sm text-red-600">Escrow not found.</main>;
+  if (loading)
+    return (
+      <>
+        <Topbar title="Escrow Details" />
+        <main className="flex-1 p-6 text-sm text-tm-dark/60">Loading…</main>
+      </>
+    );
+  if (!escrow)
+    return (
+      <>
+        <Topbar title="Escrow Details" />
+        <main className="flex-1 p-6 text-sm text-red-600">Escrow not found.</main>
+      </>
+    );
 
   const latestTerms = escrow.termVersions[0];
   const myParty = escrow.parties.find((p) => p.userId === user?.id);
@@ -81,15 +155,19 @@ function EscrowDetail() {
   const canRespond = escrow.status === "TERMS_PROPOSED" && myParty?.status !== "DECLINED";
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-tm-navy">{escrow.title}</h1>
-        <StatusBadge status={escrow.status} />
-      </div>
-      {escrow.description && <p className="mt-2 text-sm text-tm-dark/70">{escrow.description}</p>}
+    <>
+      <Topbar title="Escrow Details" subtitle={`ID: ${escrow.id}`} />
+      <main className="mx-auto max-w-2xl flex-1 bg-tm-navy/[0.02] p-6">
+        <div className="mb-1 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-tm-navy">{escrow.title}</h1>
+          <StatusBadge status={escrow.status} />
+        </div>
+        {escrow.description && <p className="mb-6 text-sm text-tm-dark/70">{escrow.description}</p>}
+
+        <StepTracker status={escrow.status} />
 
       {latestTerms && (
-        <div className="tm-card mt-6">
+        <div className="tm-card">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-tm-navy">Terms (v{latestTerms.version})</h2>
             <p className="text-xs text-tm-dark/60">Fee: {latestTerms.feePercent}%</p>
@@ -160,7 +238,8 @@ function EscrowDetail() {
           </label>
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

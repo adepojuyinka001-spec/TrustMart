@@ -8,6 +8,7 @@ import type { Listing } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { RequireAuth } from "../../../components/RequireAuth";
 import { StatusBadge } from "../../../components/StatusBadge";
+import { Topbar } from "../../../components/Topbar";
 
 function MyListings() {
   const { token } = useAuth();
@@ -40,9 +41,10 @@ function MyListings() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-tm-navy">My Listings</h1>
+    <>
+      <Topbar title="My Listings" />
+      <main className="mx-auto max-w-5xl flex-1 p-6">
+      <div className="flex items-center justify-end">
         <Link href="/listings/new" className="tm-btn-primary">
           + Post a Listing
         </Link>
@@ -104,7 +106,8 @@ function MyListings() {
           ))}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

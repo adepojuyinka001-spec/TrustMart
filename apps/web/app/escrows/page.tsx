@@ -7,6 +7,7 @@ import type { Escrow } from "../../lib/types";
 import { useAuth } from "../../lib/auth-context";
 import { RequireAuth } from "../../components/RequireAuth";
 import { StatusBadge } from "../../components/StatusBadge";
+import { Topbar } from "../../components/Topbar";
 
 function Escrows() {
   const { token } = useAuth();
@@ -21,13 +22,12 @@ function Escrows() {
   }, [token]);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-tm-navy">My Escrows</h1>
-      <p className="mt-1 text-sm text-tm-dark/70">
-        Terms are versioned and require every party's explicit acceptance. No funding/release yet — that's still pending
-        a payment provider decision.
-      </p>
-
+    <>
+      <Topbar
+        title="My Escrows"
+        subtitle="Terms are versioned and require every party's explicit acceptance. No funding/release yet."
+      />
+      <main className="mx-auto max-w-4xl flex-1 p-6">
       {loading ? (
         <p className="mt-8 text-sm text-tm-dark/60">Loading…</p>
       ) : escrows.length === 0 ? (
@@ -49,7 +49,8 @@ function Escrows() {
           ))}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

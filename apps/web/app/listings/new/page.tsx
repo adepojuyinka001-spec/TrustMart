@@ -7,6 +7,7 @@ import { nairaToMinorUnits } from "../../../lib/format";
 import type { Category, CategoryAttribute } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { RequireAuth } from "../../../components/RequireAuth";
+import { Topbar } from "../../../components/Topbar";
 
 function NewListingForm() {
   const { token } = useAuth();
@@ -84,13 +85,10 @@ function NewListingForm() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-tm-navy">Post a Listing</h1>
-      <p className="mt-1 text-sm text-tm-dark/70">
-        Your listing starts as a DRAFT. Submit it for moderation once you're ready.
-      </p>
-
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+    <>
+      <Topbar title="Post a Listing" subtitle="Starts as a DRAFT — submit it for moderation once you're ready." />
+      <main className="mx-auto max-w-2xl flex-1 p-6">
+      <form onSubmit={handleSubmit} className="tm-card space-y-5">
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-tm-dark/80">Category</span>
           <select
@@ -186,7 +184,8 @@ function NewListingForm() {
           {submitting ? "Creating…" : "Create Listing (Draft)"}
         </button>
       </form>
-    </main>
+      </main>
+    </>
   );
 }
 

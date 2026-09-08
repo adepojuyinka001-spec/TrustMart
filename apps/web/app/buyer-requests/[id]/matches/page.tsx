@@ -8,12 +8,20 @@ import { formatMoney } from "../../../../lib/format";
 import type { Match } from "../../../../lib/types";
 import { useAuth } from "../../../../lib/auth-context";
 import { RequireAuth } from "../../../../components/RequireAuth";
+import { Topbar } from "../../../../components/Topbar";
 
-const CLASSIFICATION_COLOR: Record<string, string> = {
-  EXCELLENT: "bg-emerald-100 text-emerald-800",
-  STRONG: "bg-blue-100 text-blue-800",
-  GOOD: "bg-amber-100 text-amber-800",
-  ALTERNATIVE: "bg-gray-100 text-gray-600",
+const CLASSIFICATION_STYLE: Record<string, { text: string; bar: string }> = {
+  EXCELLENT: { text: "text-emerald-700", bar: "bg-emerald-500" },
+  STRONG: { text: "text-blue-700", bar: "bg-blue-500" },
+  GOOD: { text: "text-amber-700", bar: "bg-amber-500" },
+  ALTERNATIVE: { text: "text-gray-500", bar: "bg-gray-400" },
+};
+
+const CLASSIFICATION_LABEL: Record<string, string> = {
+  EXCELLENT: "Excellent Match",
+  STRONG: "Great Match",
+  GOOD: "Good Match",
+  ALTERNATIVE: "Alternative Match",
 };
 
 function BuyerRequestMatches() {
@@ -22,6 +30,7 @@ function BuyerRequestMatches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [interestBusy, setInterestBusy] = useState<string | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,6 +45,7 @@ function BuyerRequestMatches() {
     setError(null);
     try {
       await api.post("/interests", { listingId: match.listingId, matchId: match.id }, token);
+      setSentIds((prev) => new Set(prev).add(match.id));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not send interest.");
     } finally {
@@ -44,54 +54,73 @@ function BuyerRequestMatches() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-tm-navy">Matches</h1>
-      <p className="mt-1 text-sm text-tm-dark/70">
-        Deterministically scored against your requirements. Alternative matches fall below the qualifying threshold.
-      </p>
-
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-      {loading ? (
-        <p className="mt-8 text-sm text-tm-dark/60">Loading…</p>
-      ) : matches.length === 0 ? (
-        <p className="mt-8 text-sm text-tm-dark/60">
-          No matches yet — matching runs automatically as listings and buyer requests are activated/updated.
-        </p>
-      ) : (
-        <div className="mt-6 space-y-3">
-          {matches.map((match) => (
-            <div key={match.id} className="tm-card flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <Link href={`/listings/${match.listingId}`} className="font-semibold text-tm-navy hover:text-tm-gold">
-                  {match.listing?.title ?? match.listingId}
-                </Link>
-                {match.listing && (
-                  <p className="text-sm text-tm-dark/70">
-                    {formatMoney(match.listing.askingPriceMinorUnits, match.listing.currency)}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`tm-badge ${CLASSIFICATION_COLOR[match.classification]}`}>
-                  {match.classification} · {match.scorePercent}%
-                </span>
-                {match.qualified && (
-                  <button
-                    type="button"
-                    disabled={interestBusy === match.id}
-                    onClick={() => expressInterest(match)}
-                    className="tm-btn-gold"
-                  >
-                    {interestBusy === match.id ? "Sending…" : "I'm Interested"}
-                  </button>
-                )}
-              </div>
+    <>
+      <Topbar title="Marketplace Matches" subtitle={`${matches.filter((m) => m.qualified).length} qualifying matches`} />
+      <main className="flex-1 bg-tm-navy/[0.02] p-6">
+        {matches.length > 0 && (
+          <div className="tm-card mb-6 flex items-center gap-3 border-tm-gold/30 bg-tm-gold/5">
+            <span className="text-lg">✨</span>
+            <div>
+              <p className="text-sm font-semibold text-tm-navy">We found matches that fit your needs!</p>
+              <p className="text-xs text-tm-dark/60">Deterministically scored against your requirements — never AI-guessed.</p>
             </div>
-          ))}
-        </div>
-      )}
-    </main>
+          </div>
+        )}
+
+        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+
+        {loading ? (
+          <p className="text-sm text-tm-dark/60">Loading…</p>
+        ) : matches.length === 0 ? (
+          <p className="text-sm text-tm-dark/60">
+            No matches yet — matching runs automatically as listings and buyer requests are activated/updated.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {matches.map((match) => {
+              const style = CLASSIFICATION_STYLE[match.classification];
+              return (
+                <div key={match.id} className="tm-card flex flex-wrap items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <Link href={`/listings/${match.listingId}`} className="font-semibold text-tm-navy hover:text-tm-gold">
+                      {match.listing?.title ?? match.listingId}
+                    </Link>
+                    {match.listing && (
+                      <p className="text-sm text-tm-dark/70">
+                        {formatMoney(match.listing.askingPriceMinorUnits, match.listing.currency)}
+                        {(match.listing.city || match.listing.state) && (
+                          <span className="text-tm-dark/50"> · {[match.listing.city, match.listing.state].filter(Boolean).join(", ")}</span>
+                        )}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="w-40 shrink-0">
+                    <p className={`text-sm font-bold ${style.text}`}>
+                      {match.scorePercent}% <span className="font-normal">{CLASSIFICATION_LABEL[match.classification]}</span>
+                    </p>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-tm-navy/10">
+                      <div className={`h-full rounded-full ${style.bar}`} style={{ width: `${Math.min(100, match.scorePercent)}%` }} />
+                    </div>
+                  </div>
+
+                  {match.qualified && (
+                    <button
+                      type="button"
+                      disabled={interestBusy === match.id || sentIds.has(match.id)}
+                      onClick={() => expressInterest(match)}
+                      className="tm-btn-gold shrink-0"
+                    >
+                      {sentIds.has(match.id) ? "Interest Sent ✓" : interestBusy === match.id ? "Sending…" : "I'm Interested"}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </>
   );
 }
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../lib/auth-context";
-import { Header } from "../components/Header";
+import { Sidebar } from "../components/Sidebar";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -21,8 +21,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={montserrat.variable}>
       <body className="min-h-screen bg-tm-white font-sans text-tm-dark antialiased">
         <AuthProvider>
-          <Header />
-          {children}
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <div className="flex min-h-screen flex-1 flex-col">{children}</div>
+          </div>
         </AuthProvider>
       </body>
     </html>

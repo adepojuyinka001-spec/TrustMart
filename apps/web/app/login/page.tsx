@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, isApiError } from "../../lib/auth-context";
+import { PasswordInput } from "../../components/PasswordInput";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -20,7 +22,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      router.push("/listings");
+      router.push("/dashboard");
     } catch (err) {
       setError(isApiError(err) ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -29,8 +31,11 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-6 py-16">
-      <h1 className="text-2xl font-bold text-tm-navy">Log in to TrustMart</h1>
+    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
+      <div className="mb-6 flex justify-center">
+        <Image src="/tm-icon.png" alt="TrustMart" width={56} height={56} className="rounded-xl" />
+      </div>
+      <h1 className="text-center text-2xl font-bold text-tm-navy">Log in to TrustMart</h1>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <label className="block">
@@ -40,13 +45,7 @@ export default function LoginPage() {
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-tm-dark/80">Password</span>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="tm-input"
-          />
+          <PasswordInput value={password} onChange={setPassword} required autoComplete="current-password" />
         </label>
 
         {error && <p className="text-sm text-red-600">{error}</p>}

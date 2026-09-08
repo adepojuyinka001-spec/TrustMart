@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import Image from "next/image";
+import { Suspense, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth, isApiError } from "../../lib/auth-context";
+import { PasswordInput } from "../../components/PasswordInput";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const { register } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,7 +26,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register({ email, password, firstName, lastName, referralCode: referralCode || undefined });
-      router.push("/listings");
+      router.push("/dashboard");
     } catch (err) {
       setError(isApiError(err) ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -34,8 +36,11 @@ export default function RegisterPage() {
 
   return (
     <main className="mx-auto max-w-md px-6 py-16">
-      <h1 className="text-2xl font-bold text-tm-navy">Create your TrustMart account</h1>
-      <p className="mt-2 text-sm text-tm-dark/70">Find. Secure. Transact.</p>
+      <div className="mb-6 flex justify-center">
+        <Image src="/tm-icon.png" alt="TrustMart" width={56} height={56} className="rounded-xl" />
+      </div>
+      <h1 className="text-center text-2xl font-bold text-tm-navy">Create your TrustMart account</h1>
+      <p className="mt-2 text-center text-sm text-tm-dark/70">Find. Secure. Transact.</p>
 
       <form onSubmit={handleSubmit} className="mt-8 space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -63,14 +68,7 @@ export default function RegisterPage() {
         </Field>
 
         <Field label="Password">
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="tm-input"
-          />
+          <PasswordInput value={password} onChange={setPassword} required minLength={8} autoComplete="new-password" />
         </Field>
 
         <Field label="Referral code (optional)">
@@ -109,5 +107,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1 block text-sm font-medium text-tm-dark/80">{label}</span>
       {children}
     </label>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterForm />
+    </Suspense>
   );
 }

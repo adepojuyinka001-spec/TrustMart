@@ -8,6 +8,7 @@ import type { Interest } from "../../../../lib/types";
 import { useAuth } from "../../../../lib/auth-context";
 import { RequireAuth } from "../../../../components/RequireAuth";
 import { StatusBadge } from "../../../../components/StatusBadge";
+import { Topbar } from "../../../../components/Topbar";
 
 function ListingInterests() {
   const { id } = useParams<{ id: string }>();
@@ -25,12 +26,9 @@ function ListingInterests() {
   }, [id, token]);
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-tm-navy">Interested Buyers</h1>
-      <p className="mt-1 text-sm text-tm-dark/70">
-        Buyer identity and message are visible here; budgets/requirements stay private to the buyer.
-      </p>
-
+    <>
+      <Topbar title="Interested Buyers" subtitle="Buyer identity and message are visible here; budgets/requirements stay private to the buyer." />
+      <main className="mx-auto max-w-3xl flex-1 p-6">
       {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
       {loading ? (
         <p className="mt-8 text-sm text-tm-dark/60">Loading…</p>
@@ -57,7 +55,8 @@ function ListingInterests() {
           ))}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

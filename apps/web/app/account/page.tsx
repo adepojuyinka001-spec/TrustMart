@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { RequireAuth } from "../../components/RequireAuth";
+import { Topbar } from "../../components/Topbar";
 
 interface ReferralInfo {
   referralCode: string;
@@ -24,10 +25,10 @@ function Account() {
     referral && typeof window !== "undefined" ? `${window.location.origin}/register?ref=${referral.referralCode}` : "";
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-tm-navy">My Account</h1>
-
-      <div className="tm-card mt-6">
+    <>
+      <Topbar title="My Account" />
+      <main className="mx-auto max-w-2xl flex-1 p-6">
+      <div className="tm-card">
         <p className="text-sm text-tm-dark/60">Name</p>
         <p className="font-medium text-tm-dark">
           {user?.profile?.firstName} {user?.profile?.lastName}
@@ -64,7 +65,8 @@ function Account() {
           </p>
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

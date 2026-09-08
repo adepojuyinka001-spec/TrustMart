@@ -7,6 +7,7 @@ import { formatMoney } from "../../../lib/format";
 import type { Listing } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { StatusBadge } from "../../../components/StatusBadge";
+import { Topbar } from "../../../components/Topbar";
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -42,13 +43,27 @@ export default function ListingDetailPage() {
     }
   }
 
-  if (loading) return <main className="mx-auto max-w-3xl px-6 py-10 text-sm text-tm-dark/60">Loading…</main>;
-  if (!listing) return <main className="mx-auto max-w-3xl px-6 py-10 text-sm text-red-600">Listing not found.</main>;
+  if (loading)
+    return (
+      <>
+        <Topbar title="Listing" />
+        <main className="flex-1 p-6 text-sm text-tm-dark/60">Loading…</main>
+      </>
+    );
+  if (!listing)
+    return (
+      <>
+        <Topbar title="Listing" />
+        <main className="flex-1 p-6 text-sm text-red-600">Listing not found.</main>
+      </>
+    );
 
   const isOwner = user?.id === listing.sellerUserId;
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
+    <>
+      <Topbar title={listing.title} subtitle={listing.subcategory ? `${listing.subcategory.category?.label} → ${listing.subcategory.label}` : undefined} />
+      <main className="mx-auto max-w-3xl flex-1 p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-tm-navy">{listing.title}</h1>
@@ -124,6 +139,7 @@ export default function ListingDetailPage() {
           .
         </p>
       )}
-    </main>
+      </main>
+    </>
   );
 }

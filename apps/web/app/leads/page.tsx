@@ -7,6 +7,7 @@ import type { Lead } from "../../lib/types";
 import { useAuth } from "../../lib/auth-context";
 import { RequireAuth } from "../../components/RequireAuth";
 import { StatusBadge } from "../../components/StatusBadge";
+import { Topbar } from "../../components/Topbar";
 
 function Leads() {
   const { token } = useAuth();
@@ -21,10 +22,9 @@ function Leads() {
   }, [token]);
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-tm-navy">My Leads</h1>
-      <p className="mt-1 text-sm text-tm-dark/70">Leads created when a buyer expresses interest in one of your listings.</p>
-
+    <>
+      <Topbar title="My Leads" subtitle="Leads created when a buyer expresses interest in one of your listings." />
+      <main className="mx-auto max-w-4xl flex-1 p-6">
       {loading ? (
         <p className="mt-8 text-sm text-tm-dark/60">Loading…</p>
       ) : leads.length === 0 ? (
@@ -39,7 +39,8 @@ function Leads() {
           ))}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 

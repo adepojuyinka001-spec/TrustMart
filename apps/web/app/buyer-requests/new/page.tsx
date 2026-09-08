@@ -7,6 +7,7 @@ import { nairaToMinorUnits } from "../../../lib/format";
 import type { Category, CategoryAttribute } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { RequireAuth } from "../../../components/RequireAuth";
+import { Topbar } from "../../../components/Topbar";
 
 interface RequirementRow {
   attributeId: string;
@@ -92,13 +93,10 @@ function NewBuyerRequestForm() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="text-2xl font-bold text-tm-navy">New Buyer Request</h1>
-      <p className="mt-1 text-sm text-tm-dark/70">
-        Created as DRAFT — review it and activate from "My Buyer Requests" to start matching.
-      </p>
-
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+    <>
+      <Topbar title="New Buyer Request" subtitle={'Created as DRAFT — review it and activate from "My Buyer Requests" to start matching.'} />
+      <main className="mx-auto max-w-2xl flex-1 p-6">
+      <form onSubmit={handleSubmit} className="tm-card space-y-5">
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-tm-dark/80">Category</span>
           <select required value={subcategoryId} onChange={(e) => setSubcategoryId(e.target.value)} className="tm-select">
@@ -181,7 +179,8 @@ function NewBuyerRequestForm() {
           {submitting ? "Creating…" : "Create Buyer Request (Draft)"}
         </button>
       </form>
-    </main>
+      </main>
+    </>
   );
 }
 

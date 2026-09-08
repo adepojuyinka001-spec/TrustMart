@@ -8,6 +8,7 @@ import type { BuyerRequest } from "../../lib/types";
 import { useAuth } from "../../lib/auth-context";
 import { RequireAuth } from "../../components/RequireAuth";
 import { StatusBadge } from "../../components/StatusBadge";
+import { Topbar } from "../../components/Topbar";
 
 function BuyerRequests() {
   const { token } = useAuth();
@@ -53,14 +54,10 @@ function BuyerRequests() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-tm-navy">My Buyer Requests</h1>
-          <p className="mt-1 text-sm text-tm-dark/70">
-            A request must be ACTIVE before it's eligible for matching — review it, then activate.
-          </p>
-        </div>
+    <>
+      <Topbar title="My Buyer Requests" subtitle="A request must be ACTIVE before it's eligible for matching." />
+      <main className="mx-auto max-w-5xl flex-1 p-6">
+      <div className="flex items-center justify-end">
         <Link href="/buyer-requests/new" className="tm-btn-primary">
           + New Request
         </Link>
@@ -106,7 +103,8 @@ function BuyerRequests() {
           ))}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }
 
