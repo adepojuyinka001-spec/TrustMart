@@ -277,6 +277,27 @@ async function main() {
     },
   });
 
+  // Demo admin, so the Admin Control Centre (CLAUDE.md SS25) has a real account to sign
+  // in with instead of requiring manual role assignment. Login:
+  // demo.admin@trustmart.ng / Demo12345! (dev-only; never a real credential).
+  const demoAdmin = await prisma.user.upsert({
+    where: { email: "demo.admin@trustmart.ng" },
+    update: {},
+    create: {
+      email: "demo.admin@trustmart.ng",
+      passwordHash: demoPasswordHash,
+      profile: { create: { firstName: "Demo", lastName: "Admin" } },
+    },
+  });
+  const adminRole = roleByKey.get("ADMIN");
+  if (adminRole) {
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: demoAdmin.id, roleId: adminRole.id } },
+      update: {},
+      create: { userId: demoAdmin.id, roleId: adminRole.id },
+    });
+  }
+
   const duplexSub = await prisma.subcategory.findFirst({ where: { key: "duplex", category: { key: "real-estate" } } });
   const sedanSub = await prisma.subcategory.findFirst({ where: { key: "sedan", category: { key: "vehicles" } } });
   const bedroomsAttr = await prisma.attributeDefinition.findUnique({ where: { key: "bedrooms" } });

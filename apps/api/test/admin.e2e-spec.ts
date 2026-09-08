@@ -88,4 +88,17 @@ describe("TrustMart Admin analytics/audit (e2e)", () => {
     expect(allowed.body.total).toBeGreaterThanOrEqual(2);
     expect(allowed.body.items.every((e: { action: string }) => e.action === "auth.register")).toBe(true);
   });
+
+  // Regression: /users/me exposes effective RBAC permission keys so the web app can
+  // decide whether to show the Admin nav section — a UX convenience only, never the
+  // authorization decision itself (the 403s above are what actually enforce it).
+  it("exposes effective permissions on /users/me, reflecting each account's actual RBAC grant", async () => {
+    const adminMe = await request(app.getHttpServer()).get("/users/me").set("Authorization", `Bearer ${adminToken}`);
+    expect(adminMe.status).toBe(200);
+    expect(adminMe.body.permissions).toEqual(expect.arrayContaining(["analytics:read", "audit:read"]));
+
+    const buyerMe = await request(app.getHttpServer()).get("/users/me").set("Authorization", `Bearer ${buyerToken}`);
+    expect(buyerMe.status).toBe(200);
+    expect(buyerMe.body.permissions).toEqual([]);
+  });
 });

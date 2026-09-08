@@ -13,6 +13,9 @@ export interface AuthUser {
   status: string;
   referralCode: string | null;
   profile?: Profile;
+  // UX convenience only — every admin endpoint still independently enforces its own
+  // permission server-side. Never treat this as an authorization decision on its own.
+  permissions?: string[];
 }
 
 export interface AttributeOption {
@@ -143,6 +146,28 @@ export interface Escrow {
   originType: string;
   parties: EscrowParty[];
   termVersions: EscrowTermVersion[];
+  createdAt: string;
+}
+
+export interface AnalyticsOverview {
+  users: { total: number };
+  listings: { byStatus: Record<string, number> };
+  buyerRequests: { byStatus: Record<string, number> };
+  matching: { totalRuns: number; qualified: number; qualificationRate: number | null };
+  interests: { total: number };
+  leads: { byStatus: Record<string, number> };
+  escrows: { byStatus: Record<string, number> };
+  subscriptions: { activePlans: number };
+  referrals: { byType: Record<string, number> };
+}
+
+export interface AuditEvent {
+  id: string;
+  actorId: string | null;
+  action: string;
+  resourceType: string;
+  resourceId: string | null;
+  ipAddress: string | null;
   createdAt: string;
 }
 

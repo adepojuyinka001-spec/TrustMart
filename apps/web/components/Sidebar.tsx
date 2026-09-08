@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useAuth } from "../lib/auth-context";
 import { useMobileNav } from "../lib/mobile-nav-context";
 import {
+  BoxIcon,
   ClipboardIcon,
   LogoutIcon,
   HomeIcon,
@@ -41,7 +42,24 @@ const NAV_SECTIONS: Array<{
   },
 ];
 
-const ALL_HREFS = [...NAV_SECTIONS.flatMap((s) => s.items.map((i) => i.href)), "/account"];
+// Shown only to accounts with the matching permission (checked below, not here — this
+// list just needs to exist so its hrefs participate in active-link matching).
+const ADMIN_SECTION: {
+  label: string;
+  items: Array<{ href: string; label: string; icon: (p: { className?: string }) => JSX.Element; permission: string }>;
+} = {
+  label: "Admin",
+  items: [
+    { href: "/admin/analytics", label: "Analytics", icon: BoxIcon, permission: "analytics:read" },
+    { href: "/admin/audit", label: "Audit Log", icon: ClipboardIcon, permission: "audit:read" },
+  ],
+};
+
+const ALL_HREFS = [
+  ...NAV_SECTIONS.flatMap((s) => s.items.map((i) => i.href)),
+  ...ADMIN_SECTION.items.map((i) => i.href),
+  "/account",
+];
 
 // Longest-matching-prefix wins, so e.g. "/listings/mine" doesn't also light up
 // "/listings" (Browse Listings) just because it shares that prefix.
@@ -56,8 +74,10 @@ function isActiveHref(pathname: string, href: string): boolean {
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
+
+  const visibleAdminItems = ADMIN_SECTION.items.filter((item) => user?.permissions?.includes(item.permission));
 
   return (
     <>
@@ -111,6 +131,33 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </div>
           </div>
         ))}
+
+        {visibleAdminItems.length > 0 && (
+          <div>
+            <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-tm-white/40">
+              {ADMIN_SECTION.label}
+            </p>
+            <div className="space-y-0.5">
+              {visibleAdminItems.map((item) => {
+                const active = isActiveHref(pathname, item.href);
+                const ItemIcon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
+                      active ? "bg-tm-gold text-tm-dark" : "text-tm-white/80 hover:bg-white/5 hover:text-tm-white"
+                    }`}
+                  >
+                    <ItemIcon className="h-[18px] w-[18px] shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div>
           <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-tm-white/40">Account</p>
