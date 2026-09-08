@@ -15,6 +15,7 @@ import {
   SettingsIcon,
   ShieldIcon,
   ShopIcon,
+  StarIcon,
   TagIcon,
   UserCircleIcon,
   UsersIcon,
@@ -56,6 +57,7 @@ const ADMIN_SECTION: {
     { href: "/admin/categories", label: "Categories", icon: TagIcon, permission: "category:manage" },
     { href: "/admin/listings", label: "Listing Moderation", icon: ShopIcon, permission: "listing:moderate" },
     { href: "/admin/config", label: "Platform Config", icon: SettingsIcon, permission: "platform_config:read" },
+    { href: "/admin/subscriptions", label: "Subscription Plans", icon: StarIcon, permission: "subscription:manage" },
   ],
 };
 

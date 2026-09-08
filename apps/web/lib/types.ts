@@ -202,5 +202,7 @@ export interface SubscriptionPlan {
   priceMinorUnits: string;
   currency: string;
   billingPeriod: "NONE" | "WEEKLY" | "MONTHLY";
-  entitlements: { key: string; value: string }[];
+  isActive?: boolean;
+  displayOrder?: number;
+  entitlements: { key: string; value: string; valueType?: string }[];
 }
