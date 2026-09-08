@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../lib/api";
+import { formatMoney } from "../../lib/format";
 import type { Escrow } from "../../lib/types";
 import { useAuth } from "../../lib/auth-context";
 import { RequireAuth } from "../../components/RequireAuth";
@@ -44,7 +45,14 @@ function Escrows() {
                 <p className="font-semibold text-tm-navy">{escrow.title}</p>
                 <p className="text-xs text-tm-dark/60">{escrow.originType} · created {new Date(escrow.createdAt).toLocaleDateString()}</p>
               </div>
-              <StatusBadge status={escrow.status} />
+              <div className="flex items-center gap-4">
+                {escrow.termVersions?.[0] && (
+                  <p className="text-sm font-semibold text-tm-dark">
+                    {formatMoney(escrow.termVersions[0].transactionAmountMinorUnits, escrow.currency)}
+                  </p>
+                )}
+                <StatusBadge status={escrow.status} />
+              </div>
             </Link>
           ))}
         </div>

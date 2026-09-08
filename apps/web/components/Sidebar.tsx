@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuth } from "../lib/auth-context";
+import { useMobileNav } from "../lib/mobile-nav-context";
 import {
   ClipboardIcon,
-  HomeIcon,
   LogoutIcon,
+  HomeIcon,
   PlusIcon,
   ShieldIcon,
   ShopIcon,
@@ -52,29 +54,29 @@ function isActiveHref(pathname: string, href: string): boolean {
   return longestMatch === href;
 }
 
-export function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
 
-  if (!user) return null;
-
   return (
-    <aside className="hidden w-64 shrink-0 flex-col bg-tm-navy text-tm-white lg:flex">
+    <>
       <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-5">
         <Image src="/tm-icon.png" alt="TrustMart" width={38} height={38} className="rounded-lg" />
         <div className="leading-tight">
           <p className="text-base font-extrabold tracking-wide">
             TRUST<span className="text-tm-gold">MART</span>
           </p>
-          <p className="text-[9px] font-semibold uppercase tracking-widest text-tm-white/50">
-            Marketplace | Escrow
-          </p>
+          <p className="text-[9px] font-semibold uppercase tracking-widest text-tm-white/50">Marketplace | Escrow</p>
         </div>
       </div>
 
       <div className="px-4 pt-4">
-        <Link href="/listings/new" className="flex w-full items-center justify-center gap-1.5 rounded-md bg-tm-gold px-3 py-2.5 text-sm font-semibold text-tm-dark transition hover:opacity-90">
+        <Link
+          href="/listings/new"
+          onClick={onNavigate}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md bg-tm-gold px-3 py-2.5 text-sm font-semibold text-tm-dark transition hover:opacity-90"
+        >
           <PlusIcon className="h-4 w-4" />
           Post a Listing
         </Link>
@@ -96,6 +98,7 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onNavigate}
                     className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
                       active ? "bg-tm-gold text-tm-dark" : "text-tm-white/80 hover:bg-white/5 hover:text-tm-white"
                     }`}
@@ -113,6 +116,7 @@ export function Sidebar() {
           <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-tm-white/40">Account</p>
           <Link
             href="/account"
+            onClick={onNavigate}
             className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
               pathname === "/account" ? "bg-tm-gold text-tm-dark" : "text-tm-white/80 hover:bg-white/5 hover:text-tm-white"
             }`}
@@ -136,6 +140,7 @@ export function Sidebar() {
         <button
           type="button"
           onClick={() => {
+            onNavigate?.();
             logout();
             router.push("/");
           }}
@@ -145,6 +150,42 @@ export function Sidebar() {
           Log out
         </button>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function Sidebar() {
+  const { user } = useAuth();
+  const { isOpen, close } = useMobileNav();
+  const pathname = usePathname();
+
+  // Close the mobile drawer automatically whenever the route changes.
+  useEffect(() => {
+    close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+
+  if (!user) return null;
+
+  return (
+    <>
+      <aside className="hidden w-64 shrink-0 flex-col bg-tm-navy text-tm-white lg:flex">
+        <SidebarContent />
+      </aside>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={close}
+            className="absolute inset-0 bg-black/50"
+          />
+          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col bg-tm-navy text-tm-white shadow-xl">
+            <SidebarContent onNavigate={close} />
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

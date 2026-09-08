@@ -342,7 +342,13 @@ export class EscrowService {
     return this.prisma.escrowTransaction.findMany({
       where: { parties: { some: { userId } } },
       orderBy: { updatedAt: "desc" },
-      include: { parties: true },
+      include: {
+        parties: true,
+        termVersions: {
+          orderBy: { version: "desc" },
+          include: { conditions: { orderBy: { displayOrder: "asc" } }, acceptances: true },
+        },
+      },
     });
   }
 }

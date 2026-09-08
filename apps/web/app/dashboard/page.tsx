@@ -93,7 +93,7 @@ function Dashboard() {
                         <div>
                           <p className="text-sm font-semibold text-tm-dark">{escrow.title}</p>
                           <p className="text-xs text-tm-dark/60">
-                            {escrow.termVersions[0] ? formatMoney(escrow.termVersions[0].transactionAmountMinorUnits, escrow.currency) : "—"}
+                            {escrow.termVersions?.[0] ? formatMoney(escrow.termVersions[0].transactionAmountMinorUnits, escrow.currency) : "—"}
                           </p>
                         </div>
                         <StatusBadge status={escrow.status} />

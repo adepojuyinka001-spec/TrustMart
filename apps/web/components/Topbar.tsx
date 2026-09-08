@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../lib/auth-context";
-import { SearchIcon, UserCircleIcon } from "./icons";
+import { useMobileNav } from "../lib/mobile-nav-context";
+import { MenuIcon, SearchIcon, UserCircleIcon } from "./icons";
 
 export function Topbar({ title, subtitle }: { title?: string; subtitle?: string }) {
   const { user, loading } = useAuth();
+  const { toggle } = useMobileNav();
   const router = useRouter();
   const [query, setQuery] = useState("");
 
@@ -19,7 +21,16 @@ export function Topbar({ title, subtitle }: { title?: string; subtitle?: string 
 
   return (
     <header className="flex flex-wrap items-center gap-4 border-b border-tm-navy/10 bg-tm-white px-4 py-3 sm:px-6">
-      {!user && (
+      {user ? (
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label="Open menu"
+          className="text-tm-navy lg:hidden"
+        >
+          <MenuIcon className="h-6 w-6" />
+        </button>
+      ) : (
         <Link href="/" className="flex items-center gap-2 lg:hidden">
           <Image src="/tm-icon.png" alt="TrustMart" width={30} height={30} className="rounded-md" />
           <span className="font-extrabold text-tm-navy">

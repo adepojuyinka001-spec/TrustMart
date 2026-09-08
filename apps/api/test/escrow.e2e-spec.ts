@@ -180,4 +180,39 @@ describe("TrustMart Escrow scaffolding (e2e)", () => {
       .send({ reason: "Also changed my mind" });
     expect(doubleCancel.status).toBe(403);
   });
+
+  // Regression test: GET /escrows/mine originally only included `parties`, not
+  // `termVersions`. Any consumer reading `escrow.termVersions[0]` (e.g. the web
+  // dashboard, to show the current amount) crashed once a real escrow existed, since
+  // the field was silently undefined rather than an empty array. Caught live in the
+  // browser, not by this suite, because every prior escrow.e2e-spec.ts test reads
+  // GET /escrows/:id (which always included termVersions), never GET /escrows/mine.
+  it("includes termVersions (with conditions and acceptances) in the mine listing, not just parties", async () => {
+    const httpServer = app.getHttpServer();
+    const suffix = Date.now();
+    const buyer = await registerWithId(`buyer+listmine+${suffix}@example.com`);
+    const seller = await registerWithId(`seller+listmine+${suffix}@example.com`);
+
+    await request(httpServer)
+      .post("/escrows")
+      .set("Authorization", `Bearer ${buyer.token}`)
+      .send({
+        originType: "DIRECT",
+        title: "List-mine regression check",
+        creatorRole: "BUYER",
+        invitedParties: [{ userId: seller.userId, role: "SELLER" }],
+        transactionAmountMinorUnits: 555_000,
+        feeAllocation: "BUYER_PAYS",
+        conditions: ["Condition A"],
+      });
+
+    const mineRes = await request(httpServer).get("/escrows/mine").set("Authorization", `Bearer ${buyer.token}`);
+    expect(mineRes.status).toBe(200);
+    const found = mineRes.body.find((e: { title: string }) => e.title === "List-mine regression check");
+    expect(found).toBeDefined();
+    expect(found.termVersions).toBeDefined();
+    expect(found.termVersions[0].transactionAmountMinorUnits).toBe("555000");
+    expect(found.termVersions[0].conditions[0].description).toBe("Condition A");
+    expect(found.termVersions[0].acceptances.length).toBeGreaterThan(0);
+  });
 });
