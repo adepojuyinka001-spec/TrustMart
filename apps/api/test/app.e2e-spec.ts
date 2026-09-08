@@ -106,4 +106,37 @@ describe("TrustMart API (e2e)", () => {
     });
     expect(auditRows.length).toBeGreaterThan(0);
   });
+
+  // Regression for the new /admin/config UI reading this list — previously untested.
+  it("blocks a non-admin from listing platform config, and allows an admin", async () => {
+    const buyerEmail = `buyer+platformconfiglist+${Date.now()}@example.com`;
+    const buyerAuth = await request(app.getHttpServer()).post("/auth/register").send({
+      email: buyerEmail,
+      password: "correct-horse-battery-staple",
+      firstName: "Bea",
+      lastName: "Buyer",
+    });
+
+    const forbidden = await request(app.getHttpServer())
+      .get("/platform-config")
+      .set("Authorization", `Bearer ${buyerAuth.body.accessToken}`);
+    expect(forbidden.status).toBe(403);
+
+    const adminEmail = `admin+platformconfiglist+${Date.now()}@example.com`;
+    const adminAuth = await request(app.getHttpServer()).post("/auth/register").send({
+      email: adminEmail,
+      password: "correct-horse-battery-staple",
+      firstName: "Ada",
+      lastName: "Admin",
+    });
+    const adminUser = await prisma.user.findUniqueOrThrow({ where: { email: adminEmail } });
+    const adminRole = await prisma.role.findUniqueOrThrow({ where: { key: "ADMIN" } });
+    await prisma.userRole.create({ data: { userId: adminUser.id, roleId: adminRole.id } });
+
+    const allowed = await request(app.getHttpServer())
+      .get("/platform-config")
+      .set("Authorization", `Bearer ${adminAuth.body.accessToken}`);
+    expect(allowed.status).toBe(200);
+    expect(allowed.body.some((c: { key: string }) => c.key === "escrow.fee_percent")).toBe(true);
+  });
 });

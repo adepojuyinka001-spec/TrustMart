@@ -12,6 +12,7 @@ import {
   LogoutIcon,
   HomeIcon,
   PlusIcon,
+  SettingsIcon,
   ShieldIcon,
   ShopIcon,
   TagIcon,
@@ -54,6 +55,7 @@ const ADMIN_SECTION: {
     { href: "/admin/audit", label: "Audit Log", icon: ClipboardIcon, permission: "audit:read" },
     { href: "/admin/categories", label: "Categories", icon: TagIcon, permission: "category:manage" },
     { href: "/admin/listings", label: "Listing Moderation", icon: ShopIcon, permission: "listing:moderate" },
+    { href: "/admin/config", label: "Platform Config", icon: SettingsIcon, permission: "platform_config:read" },
   ],
 };
 

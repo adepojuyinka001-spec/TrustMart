@@ -162,6 +162,16 @@ export interface Escrow {
   createdAt: string;
 }
 
+export interface PlatformConfig {
+  id: string;
+  key: string;
+  valueType: "STRING" | "NUMBER" | "BOOLEAN" | "JSON";
+  value: string;
+  description?: string | null;
+  version: number;
+  updatedAt: string;
+}
+
 export interface AnalyticsOverview {
   users: { total: number };
   listings: { byStatus: Record<string, number> };
