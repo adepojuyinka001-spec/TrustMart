@@ -20,6 +20,7 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [x] NestJS app skeleton (`apps/api`) — builds and type-checks cleanly.
 - [x] Prisma initialized — schema + seed script written, client generates successfully.
 - [x] Docker Compose (Postgres + n8n) file written — not run on this machine; local dev instead uses a portable, non-Docker PostgreSQL 18.6 on port 5433 (see `docs/00-ssot/DECISION_LOG.md`, 2026-09-07). n8n not yet running (no current dependency on it).
+- [x] **e2e tests now run against an isolated `trustmart_test` database**, not `trustmart_dev` (see `docs/00-ssot/DECISION_LOG.md`, 2026-09-08). Fixes a recurring problem: every `pnpm test:e2e` run was writing ~10-20 junk rows into the same database the web app demos against, requiring manual cleanup after every run. `apps/api/.env.test` + `test/jest-e2e.setup.ts` (wired via `jest-e2e.json`'s `setupFiles`) point tests at the new database; same 5 migrations + seed script applied there. Verified: all 29 e2e tests still pass, and `trustmart_dev`'s row counts are confirmed unchanged by a test run.
 
 ## Shared Core
 - [x] Identity/auth provider abstraction — `AuthProvider` interface + self-hosted `LocalAuthProvider` (bcryptjs + JWT), unit-tested.
