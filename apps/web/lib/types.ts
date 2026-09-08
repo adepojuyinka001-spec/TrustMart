@@ -76,6 +76,8 @@ export interface Listing {
   state?: string | null;
   city?: string | null;
   status: string;
+  createdAt?: string;
+  moderationReason?: string | null;
   subcategory?: { id: string; label: string; category?: { label: string } };
   attributeValues?: { attributeId: string; value: string; attribute?: AttributeDefinition }[];
 }

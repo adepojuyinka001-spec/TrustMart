@@ -143,4 +143,45 @@ describe("TrustMart Listing lifecycle (e2e)", () => {
     expect(markSoldRes.status).toBe(201);
     expect(markSoldRes.body.status).toBe(ListingStatus.SOLD);
   });
+
+  // Regression: the moderation queue previously returned bare Listing rows with no
+  // subcategory/category relation, so an admin UI reading `listing.subcategory.label`
+  // (the same shape every other listing view already relies on) would show nothing.
+  it("shows a submitted listing in the moderation queue with subcategory/category included, and clears it on approve/reject", async () => {
+    const httpServer = app.getHttpServer();
+    const sellerToken = await register(`seller+moderation+${Date.now()}@example.com`);
+
+    const listingRes = await request(httpServer)
+      .post("/listings")
+      .set("Authorization", `Bearer ${sellerToken}`)
+      .send({
+        subcategoryId,
+        title: "Moderation queue test listing",
+        description: "A listing to test the moderation queue.",
+        askingPriceMinorUnits: 500_000,
+      });
+    const listingId = listingRes.body.id as string;
+
+    const forbiddenQueue = await request(httpServer).get("/listings/moderation-queue").set("Authorization", `Bearer ${sellerToken}`);
+    expect(forbiddenQueue.status).toBe(403);
+
+    await request(httpServer).post(`/listings/${listingId}/submit`).set("Authorization", `Bearer ${sellerToken}`);
+
+    const queueRes = await request(httpServer).get("/listings/moderation-queue").set("Authorization", `Bearer ${adminToken}`);
+    expect(queueRes.status).toBe(200);
+    const queued = queueRes.body.find((l: { id: string }) => l.id === listingId);
+    expect(queued).toBeDefined();
+    expect(queued.subcategory.label).toBeTruthy();
+    expect(queued.subcategory.category.label).toBeTruthy();
+
+    const rejectRes = await request(httpServer)
+      .post(`/listings/${listingId}/reject`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ reason: "Test rejection reason" });
+    expect(rejectRes.status).toBe(201);
+    expect(rejectRes.body.status).toBe(ListingStatus.REJECTED);
+
+    const queueAfterRes = await request(httpServer).get("/listings/moderation-queue").set("Authorization", `Bearer ${adminToken}`);
+    expect(queueAfterRes.body.some((l: { id: string }) => l.id === listingId)).toBe(false);
+  });
 });

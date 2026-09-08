@@ -306,6 +306,7 @@ export class ListingService {
     return this.prisma.listing.findMany({
       where: { status: { in: AWAITING_MODERATION } },
       orderBy: { createdAt: "asc" },
+      include: { subcategory: { include: { category: true } }, attributeValues: { include: { attribute: true } } },
     });
   }
 }
