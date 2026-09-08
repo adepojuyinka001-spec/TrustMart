@@ -126,3 +126,47 @@ export const EyeOffIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
   </Icon>
 );
+
+export const LockIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <rect x="5" y="11" width="14" height="9" rx="1.5" />
+    <path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+  </Icon>
+);
+
+export const HeadsetIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M4 13v-1a8 8 0 0 1 16 0v1" />
+    <rect x="3" y="13" width="4" height="6" rx="1.5" />
+    <rect x="17" y="13" width="4" height="6" rx="1.5" />
+    <path d="M19 19v1a2 2 0 0 1-2 2h-3" />
+  </Icon>
+);
+
+export const BoxIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M3.5 7.5 12 3l8.5 4.5V16.5L12 21l-8.5-4.5Z" />
+    <path d="M3.5 7.5 12 12l8.5-4.5" />
+    <path d="M12 12v9" />
+  </Icon>
+);
+
+export const StarIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p} fill="currentColor" stroke="none">
+    <path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5-4.8-4.6 6.6-.9Z" />
+  </Icon>
+);
+
+export const CheckCircleIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12.5 2.5 2.5 5.5-5.5" />
+  </Icon>
+);
+
+export const ArrowRightIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M4 12h16" />
+    <path d="m13 5 7 7-7 7" />
+  </Icon>
+);
