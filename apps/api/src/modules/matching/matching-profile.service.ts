@@ -65,4 +65,18 @@ export class MatchingProfileService {
       include: { criteria: { include: { attribute: true } } },
     });
   }
+
+  // Admin overview (`matching:manage`) — before this, there was no way to see which
+  // subcategories already have a custom weight profile vs. still running on whatever
+  // default the Matching Engine falls back to, short of querying the database directly.
+  async listAllActive() {
+    return this.prisma.matchingProfile.findMany({
+      where: { isActive: true },
+      orderBy: { subcategoryId: "asc" },
+      include: {
+        subcategory: { include: { category: true } },
+        criteria: { include: { attribute: true } },
+      },
+    });
+  }
 }

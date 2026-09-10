@@ -198,4 +198,36 @@ describe("TrustMart Marketplace matching (e2e)", () => {
     expect(allowed.status).toBe(201);
     expect(allowed.body.version).toBe(1);
   });
+
+  // Regression: creating a profile worked, but nothing let an admin see which
+  // subcategories already had one before this — the same "write with no matching read"
+  // gap shape found in Lead/Verification moderation the same week.
+  it("blocks a non-admin from listing active matching profiles, and lets an admin see one just created", async () => {
+    const httpServer = app.getHttpServer();
+    const suffix = Date.now();
+    const buyer = await register(`buyer+listprofiles+${suffix}@example.com`);
+    const category = await request(httpServer)
+      .post("/categories")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ key: `listprofiles-cat-${suffix}`, label: "List Profiles Category" });
+    const subcategory = await request(httpServer)
+      .post(`/categories/${category.body.id}/subcategories`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ key: `listprofiles-sub-${suffix}`, label: "List Profiles Sub" });
+
+    const forbidden = await request(httpServer).get("/matching-profiles").set("Authorization", `Bearer ${buyer.token}`);
+    expect(forbidden.status).toBe(403);
+
+    await request(httpServer)
+      .post("/matching-profiles")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ subcategoryId: subcategory.body.id, thresholdOverridePercent: 60, criteria: [] });
+
+    const allowed = await request(httpServer).get("/matching-profiles").set("Authorization", `Bearer ${adminToken}`);
+    expect(allowed.status).toBe(200);
+    const created = allowed.body.find((p: { subcategoryId: string }) => p.subcategoryId === subcategory.body.id);
+    expect(created).toBeDefined();
+    expect(created.thresholdOverridePercent).toBe(60);
+    expect(created.subcategory.label).toBe("List Profiles Sub");
+  });
 });

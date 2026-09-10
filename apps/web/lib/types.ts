@@ -206,6 +206,16 @@ export interface AuditEvent {
   createdAt: string;
 }
 
+export interface MatchingProfile {
+  id: string;
+  subcategoryId: string;
+  version: number;
+  isActive: boolean;
+  thresholdOverridePercent?: number | null;
+  subcategory: { id: string; label: string; category: { label: string } };
+  criteria: { attributeId: string; defaultWeight: number; attribute: AttributeDefinition }[];
+}
+
 export interface SubscriptionPlan {
   id: string;
   key: string;

@@ -16,6 +16,7 @@ import {
   SettingsIcon,
   ShieldIcon,
   ShopIcon,
+  SlidersIcon,
   StarIcon,
   TagIcon,
   UserCircleIcon,
@@ -61,6 +62,7 @@ const ADMIN_SECTION: {
     { href: "/admin/config", label: "Platform Config", icon: SettingsIcon, permission: "platform_config:read" },
     { href: "/admin/subscriptions", label: "Subscription Plans", icon: StarIcon, permission: "subscription:manage" },
     { href: "/admin/verification", label: "Verification", icon: CheckCircleIcon, permission: "verification:review" },
+    { href: "/admin/matching", label: "Matching Weights", icon: SlidersIcon, permission: "matching:manage" },
   ],
 };
 

@@ -30,6 +30,13 @@ export class MatchingController {
     return this.matchingProfileService.create(dto, user.userId, req.ip);
   }
 
+  @Get("matching-profiles")
+  @UseGuards(PermissionGuard)
+  @RequirePermission("matching:manage")
+  listActiveProfiles() {
+    return this.matchingProfileService.listAllActive();
+  }
+
   // Buyer-facing: only the owning buyer sees their matches. Alternative (below-threshold)
   // matches are included but explicitly labelled, per CLAUDE.md SS9.
   @Get("buyer-requests/:id/matches")

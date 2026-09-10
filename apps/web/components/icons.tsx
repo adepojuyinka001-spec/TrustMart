@@ -106,6 +106,15 @@ export const MenuIcon = (p: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
+export const SlidersIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M5 5v6M5 15v4M12 5v3M12 12v7M19 5v10M19 19v0" />
+    <circle cx="5" cy="13" r="2" />
+    <circle cx="12" cy="10" r="2" />
+    <circle cx="19" cy="17" r="2" />
+  </Icon>
+);
+
 export const SettingsIcon = (p: SVGProps<SVGSVGElement>) => (
   <Icon {...p}>
     <circle cx="12" cy="12" r="3" />
