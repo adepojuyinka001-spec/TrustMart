@@ -33,3 +33,8 @@ Thumbs.db
 
 # Docker volumes (if any local bind mounts are added)
 docker-data/
+
+# User-uploaded listing photos (local-disk MediaStorage dev implementation) — never commit
+# user content; production uses a real object storage provider once one is chosen (Open
+# Decision, CLAUDE.md SS39).
+apps/api/uploads/

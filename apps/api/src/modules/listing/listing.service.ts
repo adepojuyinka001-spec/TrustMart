@@ -1,11 +1,14 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { ListingStatus } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AuditService } from "../audit/audit.service";
 import { PlatformConfigService } from "../platform-config/platform-config.service";
 import { MatchingEngineService } from "../matching/matching-engine.service";
+import type { MediaStorage } from "../media/media-storage.service";
 import type { CreateListingDto } from "./dto/create-listing.dto";
 import type { UpdateListingDto } from "./dto/update-listing.dto";
+
+const MEDIA_INCLUDE = { orderBy: [{ isPrimary: "desc" as const }, { displayOrder: "asc" as const }] };
 
 const OPEN_FOR_EDIT: ListingStatus[] = [ListingStatus.DRAFT, ListingStatus.ACTIVE];
 const AWAITING_MODERATION: ListingStatus[] = [ListingStatus.SUBMITTED, ListingStatus.CHECKING];
@@ -22,7 +25,16 @@ export class ListingService {
     private readonly auditService: AuditService,
     private readonly configService: PlatformConfigService,
     private readonly matchingEngine: MatchingEngineService,
+    @Inject("MediaStorage") private readonly mediaStorage: MediaStorage,
   ) {}
+
+  // Every listing read path below returns `media` with a resolved `url`, not a raw
+  // `storageKey` — this is the one place that translates between them, so a future real
+  // object storage provider (Open Decision, CLAUDE.md SS39) only needs its
+  // MediaStorage.resolveUrl() implementation swapped, not every caller.
+  private withMediaUrls<T extends { media: { storageKey: string }[] }>(listing: T) {
+    return { ...listing, media: listing.media.map((m) => ({ ...m, url: this.mediaStorage.resolveUrl(m.storageKey) })) };
+  }
 
   private async assertOwnsListing(listingId: string, userId: string) {
     const listing = await this.prisma.listing.findUnique({ where: { id: listingId } });
@@ -278,35 +290,46 @@ export class ListingService {
   async get(listingId: string) {
     const listing = await this.prisma.listing.findUnique({
       where: { id: listingId },
-      include: { attributeValues: { include: { attribute: true } }, subcategory: { include: { category: true } } },
+      include: {
+        attributeValues: { include: { attribute: true } },
+        subcategory: { include: { category: true } },
+        media: MEDIA_INCLUDE,
+      },
     });
     if (!listing) {
       throw new NotFoundException("Listing not found.");
     }
-    return listing;
+    return this.withMediaUrls(listing);
   }
 
   async listMine(sellerUserId: string) {
-    return this.prisma.listing.findMany({
+    const listings = await this.prisma.listing.findMany({
       where: { sellerUserId },
       orderBy: { createdAt: "desc" },
-      include: { subcategory: { include: { category: true } } },
+      include: { subcategory: { include: { category: true } }, media: MEDIA_INCLUDE },
     });
+    return listings.map((l) => this.withMediaUrls(l));
   }
 
   async listActive(subcategoryId?: string) {
-    return this.prisma.listing.findMany({
+    const listings = await this.prisma.listing.findMany({
       where: { status: ListingStatus.ACTIVE, subcategoryId },
       orderBy: { activatedAt: "desc" },
-      include: { subcategory: { include: { category: true } } },
+      include: { subcategory: { include: { category: true } }, media: MEDIA_INCLUDE },
     });
+    return listings.map((l) => this.withMediaUrls(l));
   }
 
   async listAwaitingModeration() {
-    return this.prisma.listing.findMany({
+    const listings = await this.prisma.listing.findMany({
       where: { status: { in: AWAITING_MODERATION } },
       orderBy: { createdAt: "asc" },
-      include: { subcategory: { include: { category: true } }, attributeValues: { include: { attribute: true } } },
+      include: {
+        subcategory: { include: { category: true } },
+        attributeValues: { include: { attribute: true } },
+        media: MEDIA_INCLUDE,
+      },
     });
+    return listings.map((l) => this.withMediaUrls(l));
   }
 }

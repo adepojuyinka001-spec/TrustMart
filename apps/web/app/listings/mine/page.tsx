@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { api, ApiError } from "../../../lib/api";
 import { formatMoney } from "../../../lib/format";
 import type { Listing } from "../../../lib/types";
@@ -9,6 +10,7 @@ import { useAuth } from "../../../lib/auth-context";
 import { RequireAuth } from "../../../components/RequireAuth";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Topbar } from "../../../components/Topbar";
+import { TagIcon } from "../../../components/icons";
 
 function MyListings() {
   const { token } = useAuth();
@@ -60,11 +62,22 @@ function MyListings() {
         <div className="mt-6 space-y-3">
           {listings.map((listing) => (
             <div key={listing.id} className="tm-card flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <Link href={`/listings/${listing.id}`} className="font-semibold text-tm-navy hover:text-tm-gold">
-                  {listing.title}
-                </Link>
-                <p className="text-sm text-tm-dark/70">{formatMoney(listing.askingPriceMinorUnits, listing.currency)}</p>
+              <div className="flex items-center gap-3">
+                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-tm-navy/5">
+                  {listing.media && listing.media.length > 0 ? (
+                    <Image src={listing.media[0].url} alt={listing.title} fill className="object-cover" unoptimized />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-tm-navy/20">
+                      <TagIcon className="h-5 w-5" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Link href={`/listings/${listing.id}`} className="font-semibold text-tm-navy hover:text-tm-gold">
+                    {listing.title}
+                  </Link>
+                  <p className="text-sm text-tm-dark/70">{formatMoney(listing.askingPriceMinorUnits, listing.currency)}</p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <StatusBadge status={listing.status} />

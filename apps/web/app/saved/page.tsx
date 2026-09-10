@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { api, ApiError } from "../../lib/api";
 import { formatMoney } from "../../lib/format";
 import type { SavedListingEntry } from "../../lib/types";
 import { useAuth } from "../../lib/auth-context";
 import { RequireAuth } from "../../components/RequireAuth";
 import { Topbar } from "../../components/Topbar";
-import { HeartIcon } from "../../components/icons";
+import { HeartIcon, ShopIcon } from "../../components/icons";
 
 function SavedListings() {
   const { token } = useAuth();
@@ -52,11 +53,20 @@ function SavedListings() {
                   type="button"
                   onClick={() => unsave(listingId)}
                   aria-label="Unsave listing"
-                  className="absolute right-4 top-4 text-tm-gold transition hover:opacity-70"
+                  className="absolute right-4 top-4 z-10 text-tm-gold drop-shadow transition hover:opacity-70"
                 >
                   <HeartIcon filled className="h-5 w-5" />
                 </button>
                 <Link href={`/listings/${listingId}`} className="block">
+                  <div className="relative -mx-5 -mt-5 mb-3 aspect-video overflow-hidden rounded-t-lg bg-tm-navy/5">
+                    {listing.media && listing.media.length > 0 ? (
+                      <Image src={listing.media[0].url} alt={listing.title} fill className="object-cover" unoptimized />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-tm-navy/20">
+                        <ShopIcon className="h-10 w-10" />
+                      </div>
+                    )}
+                  </div>
                   {listing.subcategory && (
                     <span className="tm-badge bg-tm-navy/10 text-tm-navy">{listing.subcategory.label}</span>
                   )}

@@ -80,6 +80,14 @@ export interface Listing {
   moderationReason?: string | null;
   subcategory?: { id: string; label: string; category?: { label: string } };
   attributeValues?: { attributeId: string; value: string; attribute?: AttributeDefinition }[];
+  media?: ListingPhoto[];
+}
+
+export interface ListingPhoto {
+  id: string;
+  url: string;
+  isPrimary: boolean;
+  displayOrder: number;
 }
 
 export interface BuyerRequirement {

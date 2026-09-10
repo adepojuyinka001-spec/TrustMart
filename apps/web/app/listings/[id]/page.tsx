@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { api, ApiError } from "../../../lib/api";
 import { formatMoney } from "../../../lib/format";
 import type { Listing, SavedListingEntry } from "../../../lib/types";
@@ -9,6 +10,7 @@ import { useAuth } from "../../../lib/auth-context";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Topbar } from "../../../components/Topbar";
 import { HeartIcon } from "../../../components/icons";
+import { PhotoManager } from "../../../components/PhotoManager";
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -23,12 +25,14 @@ export default function ListingDetailPage() {
   const [saved, setSaved] = useState(false);
   const [saveBusy, setSaveBusy] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api
       .get<Listing>(`/listings/${id}`)
       .then(setListing)
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(load, [load]);
 
   useEffect(() => {
     if (!token) return;
@@ -121,6 +125,23 @@ export default function ListingDetailPage() {
         </div>
       </div>
 
+      {listing.media && listing.media.length > 0 && (
+        <div className="mt-4">
+          <div className="relative aspect-video overflow-hidden rounded-lg border border-tm-navy/10 bg-tm-navy/5">
+            <Image src={listing.media[0].url} alt={listing.title} fill className="object-cover" unoptimized priority />
+          </div>
+          {listing.media.length > 1 && (
+            <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {listing.media.slice(1).map((photo) => (
+                <div key={photo.id} className="relative aspect-square overflow-hidden rounded-md border border-tm-navy/10">
+                  <Image src={photo.url} alt={listing.title} fill className="object-cover" unoptimized />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <p className="mt-4 text-2xl font-bold text-tm-dark">
         {formatMoney(listing.askingPriceMinorUnits, listing.currency)}
         {listing.negotiable && <span className="ml-2 text-sm font-normal text-tm-dark/60">(negotiable)</span>}
@@ -176,13 +197,18 @@ export default function ListingDetailPage() {
       )}
 
       {isOwner && (
-        <p className="mt-8 rounded-lg border border-tm-navy/10 bg-tm-navy/5 p-4 text-sm text-tm-dark/70">
-          This is your listing. Manage it from{" "}
-          <a href="/listings/mine" className="font-semibold text-tm-navy hover:text-tm-gold">
-            My Listings
-          </a>
-          .
-        </p>
+        <>
+          <div className="mt-8">
+            <PhotoManager listingId={listing.id} photos={listing.media ?? []} onChanged={load} />
+          </div>
+          <p className="mt-4 rounded-lg border border-tm-navy/10 bg-tm-navy/5 p-4 text-sm text-tm-dark/70">
+            This is your listing. Manage its details from{" "}
+            <a href="/listings/mine" className="font-semibold text-tm-navy hover:text-tm-gold">
+              My Listings
+            </a>
+            .
+          </p>
+        </>
       )}
       </main>
     </>

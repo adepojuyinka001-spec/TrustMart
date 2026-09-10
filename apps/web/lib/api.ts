@@ -14,12 +14,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit, token?: string | null): Promise<T> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(`${API_BASE}${path}`, { ...options, headers: { ...headers, ...options.headers } });
-
+async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let message = res.statusText;
     try {
@@ -37,6 +32,23 @@ async function request<T>(path: string, options: RequestInit, token?: string | n
   return res.json();
 }
 
+async function request<T>(path: string, options: RequestInit, token?: string | null): Promise<T> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers: { ...headers, ...options.headers } });
+  return handleResponse<T>(res);
+}
+
+// Multipart upload — deliberately bypasses `request()`'s JSON Content-Type so the browser
+// sets its own multipart boundary header.
+async function uploadForm<T>(path: string, formData: FormData, token?: string | null): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`${API_BASE}${path}`, { method: "POST", body: formData, headers });
+  return handleResponse<T>(res);
+}
+
 export const api = {
   get: <T>(path: string, token?: string | null) => request<T>(path, { method: "GET" }, token),
   post: <T>(path: string, body?: unknown, token?: string | null) =>
@@ -46,4 +58,5 @@ export const api = {
   put: <T>(path: string, body?: unknown, token?: string | null) =>
     request<T>(path, { method: "PUT", body: body !== undefined ? JSON.stringify(body) : undefined }, token),
   delete: <T>(path: string, token?: string | null) => request<T>(path, { method: "DELETE" }, token),
+  uploadForm,
 };

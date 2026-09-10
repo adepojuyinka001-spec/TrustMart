@@ -409,9 +409,26 @@ model Listing {
   matches         Match[]
   savedBy         SavedListing[]
   interests       Interest[]
+  media           ListingMedia[]
 
   @@index([subcategoryId, status])
   @@index([sellerUserId])
+}
+
+// Storage is a provider-agnostic path (`storageKey`) resolved to a URL by whichever
+// MediaStorageService implementation is active — object storage provider is an unresolved
+// Open Decision (CLAUDE.md SS39), so this deliberately doesn't assume S3/Cloudinary/etc.
+// Every stored file is the watermarked version; the pre-watermark original is never kept.
+model ListingMedia {
+  id           String   @id @default(cuid())
+  listingId    String
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  storageKey   String
+  isPrimary    Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@index([listingId])
 }
 
 model ListingAttributeValue {

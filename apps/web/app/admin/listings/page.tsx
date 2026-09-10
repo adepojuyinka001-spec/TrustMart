@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { api, ApiError } from "../../../lib/api";
 import { formatMoney } from "../../../lib/format";
 import type { Listing } from "../../../lib/types";
@@ -83,6 +84,16 @@ function ListingCard({ listing, onDecided }: { listing: Listing; onDecided: () =
         </div>
         <p className="text-sm font-bold text-tm-navy">{formatMoney(listing.askingPriceMinorUnits, listing.currency)}</p>
       </div>
+
+      {listing.media && listing.media.length > 0 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto">
+          {listing.media.map((photo) => (
+            <div key={photo.id} className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-tm-navy/10">
+              <Image src={photo.url} alt={listing.title} fill className="object-cover" unoptimized />
+            </div>
+          ))}
+        </div>
+      )}
 
       <p className="mt-3 text-sm text-tm-dark/70">{listing.description}</p>
 
