@@ -8,11 +8,13 @@ import { LeadAdminController } from "./lead-admin.controller";
 import { LeadService } from "./lead.service";
 import { ContactAccessController } from "./contact-access.controller";
 import { ContactAccessService } from "./contact-access.service";
+import { SavedListingController } from "./saved-listing.controller";
+import { SavedListingService } from "./saved-listing.service";
 
 @Module({
   imports: [AuditModule, ConsentModule],
-  controllers: [InterestController, LeadController, LeadAdminController, ContactAccessController],
-  providers: [InterestService, LeadService, ContactAccessService],
-  exports: [InterestService, LeadService, ContactAccessService],
+  controllers: [InterestController, LeadController, LeadAdminController, ContactAccessController, SavedListingController],
+  providers: [InterestService, LeadService, ContactAccessService, SavedListingService],
+  exports: [InterestService, LeadService, ContactAccessService, SavedListingService],
 })
 export class EngagementModule {}

@@ -121,6 +121,13 @@ export interface Interest {
   lead?: Lead;
 }
 
+export interface SavedListingEntry {
+  id: string;
+  listingId: string;
+  createdAt: string;
+  listing: Listing;
+}
+
 export interface VerificationCase {
   id: string;
   subjectType: "USER" | "BUSINESS";

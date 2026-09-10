@@ -269,4 +269,51 @@ describe("TrustMart Engagement (e2e)", () => {
     expect(detail.body.id).toBe(leadId);
     expect(detail.body.interest.listing.title).toBe("Admin lead visibility test listing");
   });
+
+  // Saved Listings (CLAUDE.md SS30/SS34) — a personal buyer bookmark, deliberately
+  // simpler than Interest: no Lead, no seller visibility, idempotent save/unsave.
+  it("lets a buyer save, idempotently re-save, list, and unsave a listing — private to them", async () => {
+    const httpServer = app.getHttpServer();
+    const suffix = Date.now();
+    const sellerToken = await register(`seller+saved+${suffix}@example.com`);
+    const buyerToken = await register(`buyer+saved+${suffix}@example.com`);
+    const otherBuyerToken = await register(`otherbuyer+saved+${suffix}@example.com`);
+
+    const listingRes = await request(httpServer).post("/listings").set("Authorization", `Bearer ${sellerToken}`).send({
+      subcategoryId,
+      title: "Saved listing test",
+      description: "A listing to test saving.",
+      askingPriceMinorUnits: 1_000_000,
+    });
+    const listingId = listingRes.body.id as string;
+    await request(httpServer).post(`/listings/${listingId}/submit`).set("Authorization", `Bearer ${sellerToken}`);
+    await request(httpServer).post(`/listings/${listingId}/approve`).set("Authorization", `Bearer ${adminToken}`);
+
+    const saveRes = await request(httpServer).post(`/listings/${listingId}/save`).set("Authorization", `Bearer ${buyerToken}`);
+    expect(saveRes.status).toBe(201);
+
+    // Idempotent: saving again doesn't error or duplicate.
+    const resaveRes = await request(httpServer).post(`/listings/${listingId}/save`).set("Authorization", `Bearer ${buyerToken}`);
+    expect(resaveRes.status).toBe(201);
+
+    const mineRes = await request(httpServer).get("/saved-listings/mine").set("Authorization", `Bearer ${buyerToken}`);
+    expect(mineRes.status).toBe(200);
+    expect(mineRes.body).toHaveLength(1);
+    expect(mineRes.body[0].listing.title).toBe("Saved listing test");
+
+    // Private: another buyer's saved-listings view doesn't show it.
+    const otherMineRes = await request(httpServer).get("/saved-listings/mine").set("Authorization", `Bearer ${otherBuyerToken}`);
+    expect(otherMineRes.status).toBe(200);
+    expect(otherMineRes.body).toHaveLength(0);
+
+    const unsaveRes = await request(httpServer).delete(`/listings/${listingId}/save`).set("Authorization", `Bearer ${buyerToken}`);
+    expect(unsaveRes.status).toBe(204);
+
+    const afterUnsaveRes = await request(httpServer).get("/saved-listings/mine").set("Authorization", `Bearer ${buyerToken}`);
+    expect(afterUnsaveRes.body).toHaveLength(0);
+
+    // Idempotent: unsaving something not saved doesn't error.
+    const reunsaveRes = await request(httpServer).delete(`/listings/${listingId}/save`).set("Authorization", `Bearer ${buyerToken}`);
+    expect(reunsaveRes.status).toBe(204);
+  });
 });

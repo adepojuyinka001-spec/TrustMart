@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api, ApiError } from "../../../lib/api";
 import { formatMoney } from "../../../lib/format";
-import type { Listing } from "../../../lib/types";
+import type { Listing, SavedListingEntry } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { Topbar } from "../../../components/Topbar";
+import { HeartIcon } from "../../../components/icons";
 
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,8 @@ export default function ListingDetailPage() {
   const [message, setMessage] = useState("");
   const [interestState, setInterestState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [interestError, setInterestError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saveBusy, setSaveBusy] = useState(false);
 
   useEffect(() => {
     api
@@ -26,6 +29,35 @@ export default function ListingDetailPage() {
       .then(setListing)
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!token) return;
+    api
+      .get<SavedListingEntry[]>("/saved-listings/mine", token)
+      .then((saved) => setSaved(saved.some((s) => s.listingId === id)))
+      .catch(() => {});
+  }, [id, token]);
+
+  async function toggleSave() {
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+    setSaveBusy(true);
+    try {
+      if (saved) {
+        await api.delete(`/listings/${id}/save`, token);
+        setSaved(false);
+      } else {
+        await api.post(`/listings/${id}/save`, undefined, token);
+        setSaved(true);
+      }
+    } catch {
+      // Non-critical UI action — silently leave state unchanged on failure.
+    } finally {
+      setSaveBusy(false);
+    }
+  }
 
   async function expressInterest() {
     if (!token) {
@@ -73,7 +105,20 @@ export default function ListingDetailPage() {
             </p>
           )}
         </div>
-        <StatusBadge status={listing.status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={listing.status} />
+          {!isOwner && (
+            <button
+              type="button"
+              onClick={toggleSave}
+              disabled={saveBusy}
+              aria-label={saved ? "Unsave listing" : "Save listing"}
+              className="text-tm-gold transition hover:opacity-70 disabled:opacity-40"
+            >
+              <HeartIcon filled={saved} className="h-6 w-6" />
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="mt-4 text-2xl font-bold text-tm-dark">

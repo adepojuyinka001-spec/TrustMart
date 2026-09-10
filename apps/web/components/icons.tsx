@@ -106,6 +106,12 @@ export const MenuIcon = (p: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
+export const HeartIcon = ({ filled, ...p }: SVGProps<SVGSVGElement> & { filled?: boolean }) => (
+  <Icon {...p} fill={filled ? "currentColor" : "none"}>
+    <path d="M12 20.5s-7.5-4.6-9.8-9C.7 8.1 2 4.5 5.4 3.8c2-.4 3.9.5 5 2.2 1.1-1.7 3-2.6 5-2.2 3.4.7 4.7 4.3 3.2 7.7-2.3 4.4-9.8 9-9.8 9Z" />
+  </Icon>
+);
+
 export const SlidersIcon = (p: SVGProps<SVGSVGElement>) => (
   <Icon {...p}>
     <path d="M5 5v6M5 15v4M12 5v3M12 12v7M19 5v10M19 19v0" />
