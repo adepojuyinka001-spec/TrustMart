@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "../lib/auth-context";
 import { MobileNavProvider } from "../lib/mobile-nav-context";
 import { Sidebar } from "../components/Sidebar";
+import { Footer } from "../components/Footer";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -25,7 +26,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <MobileNavProvider>
             <div className="flex min-h-screen">
               <Sidebar />
-              <div className="flex min-h-screen flex-1 flex-col">{children}</div>
+              <div className="flex min-h-screen flex-1 flex-col">
+                {children}
+                <Footer />
+              </div>
             </div>
           </MobileNavProvider>
         </AuthProvider>
