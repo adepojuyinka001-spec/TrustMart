@@ -65,6 +65,36 @@ describe("TrustMart Admin analytics/audit (e2e)", () => {
     expect(allowed.body).toHaveProperty("referrals");
   });
 
+  it("blocks a non-admin from reading the funnel, and allows an admin with honest untracked stages", async () => {
+    const forbidden = await request(app.getHttpServer())
+      .get("/admin/analytics/funnel")
+      .set("Authorization", `Bearer ${buyerToken}`);
+    expect(forbidden.status).toBe(403);
+
+    const allowed = await request(app.getHttpServer())
+      .get("/admin/analytics/funnel")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(allowed.status).toBe(200);
+    expect(Array.isArray(allowed.body.stages)).toBe(true);
+    const stageKeys = allowed.body.stages.map((s: { key: string }) => s.key);
+    expect(stageKeys).toEqual([
+      "registered",
+      "listing_or_request",
+      "match",
+      "interest",
+      "contact",
+      "transaction_started",
+      "transaction_completed",
+    ]);
+    const registeredStage = allowed.body.stages.find((s: { key: string }) => s.key === "registered");
+    expect(registeredStage.count).toBeGreaterThanOrEqual(2);
+    expect(registeredStage.conversionFromPrevious).toBeNull();
+    // Transaction Completed is never fabricated as 0 -- Escrow completion doesn't exist yet.
+    const completedStage = allowed.body.stages.find((s: { key: string }) => s.key === "transaction_completed");
+    expect(completedStage.count).toBeNull();
+    expect(completedStage.note).toBeTruthy();
+  });
+
   it("rejects unauthenticated access to both admin endpoints", async () => {
     const overviewRes = await request(app.getHttpServer()).get("/admin/analytics/overview");
     expect(overviewRes.status).toBe(401);

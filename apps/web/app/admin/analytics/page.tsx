@@ -3,13 +3,59 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
-import type { AnalyticsOverview } from "../../../lib/types";
+import type { AnalyticsOverview, MarketplaceFunnel } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { RequirePermission } from "../../../components/RequirePermission";
 import { Topbar } from "../../../components/Topbar";
 import { StatCard } from "../../../components/StatCard";
 import { StatusBadge } from "../../../components/StatusBadge";
 import { ClipboardIcon, GiftIcon, ShieldIcon, TagIcon, UsersIcon } from "../../../components/icons";
+
+// CLAUDE.md SS35's Marketplace funnel, using only what's actually trackable today
+// (Visitor has no page-view analytics; Reward/Service Review need a completed Escrow,
+// which doesn't exist yet). Bar widths are relative to the first stage's count.
+function FunnelChart({ funnel }: { funnel: MarketplaceFunnel }) {
+  const baseline = funnel.stages[0]?.count ?? 0;
+  return (
+    <div className="tm-card space-y-3">
+      <h2 className="font-semibold text-tm-navy">Marketplace Funnel</h2>
+      <div className="space-y-2.5">
+        {funnel.stages.map((stage) => {
+          const widthPercent = stage.count === null || baseline === 0 ? 0 : Math.max(4, (stage.count / baseline) * 100);
+          return (
+            <div key={stage.key}>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="font-medium text-tm-dark/80">{stage.label}</span>
+                <span className="text-tm-dark/50">
+                  {stage.count === null ? (
+                    "Not tracked yet"
+                  ) : (
+                    <>
+                      {stage.count.toLocaleString()}
+                      {stage.conversionFromPrevious !== null && (
+                        <span className="ml-1.5 text-tm-navy">({stage.conversionFromPrevious}%)</span>
+                      )}
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="h-2.5 w-full overflow-hidden rounded-full border border-dashed border-tm-navy/15 bg-tm-navy/5">
+                {stage.count !== null && (
+                  <div className="h-full rounded-full bg-tm-gold" style={{ width: `${widthPercent}%` }} />
+                )}
+              </div>
+              {stage.note && <p className="mt-1 text-[11px] text-tm-dark/40">{stage.note}</p>}
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[11px] text-tm-dark/40">
+        Stages aren&apos;t a strict per-user sequence — e.g. a buyer can express interest by browsing directly,
+        without a matching buyer request, so Interest can exceed Match.
+      </p>
+    </div>
+  );
+}
 
 function StatusBreakdown({ title, byStatus }: { title: string; byStatus: Record<string, number> }) {
   const entries = Object.entries(byStatus);
@@ -35,13 +81,16 @@ function StatusBreakdown({ title, byStatus }: { title: string; byStatus: Record<
 function AdminAnalytics() {
   const { token } = useAuth();
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
+  const [funnel, setFunnel] = useState<MarketplaceFunnel | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get<AnalyticsOverview>("/admin/analytics/overview", token)
-      .then(setOverview)
+    Promise.all([api.get<AnalyticsOverview>("/admin/analytics/overview", token), api.get<MarketplaceFunnel>("/admin/analytics/funnel", token)])
+      .then(([overviewRes, funnelRes]) => {
+        setOverview(overviewRes);
+        setFunnel(funnelRes);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load analytics."))
       .finally(() => setLoading(false));
   }, [token]);
@@ -82,6 +131,8 @@ function AdminAnalytics() {
                 tone="green"
               />
             </div>
+
+            {funnel && <FunnelChart funnel={funnel} />}
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <StatusBreakdown title="Listings" byStatus={overview.listings.byStatus} />

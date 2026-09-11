@@ -211,6 +211,18 @@ export interface AnalyticsOverview {
   referrals: { byType: Record<string, number> };
 }
 
+export interface FunnelStage {
+  key: string;
+  label: string;
+  count: number | null;
+  conversionFromPrevious: number | null;
+  note?: string;
+}
+
+export interface MarketplaceFunnel {
+  stages: FunnelStage[];
+}
+
 export interface AuditEvent {
   id: string;
   actorId: string | null;

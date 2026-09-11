@@ -55,4 +55,63 @@ export class AnalyticsService {
       referrals: { byType: toCountMap(referralsByType, "referrerType") },
     };
   }
+
+  // CLAUDE.md SS35: Visitor -> Registered -> Buyer Request/Seller Listing -> Match ->
+  // Interest -> Contact -> Inspection/Negotiation -> Transaction Started -> Transaction
+  // Completed -> Reward -> Service Review -> Repeat. Visitor isn't trackable (no page-view
+  // analytics exists) so this starts at Registered; Reward/Service Review don't exist yet
+  // either (Phase 8, blocked on completed Escrow). Transaction Completed is reported as
+  // `null`, not a fabricated 0 — EscrowStatus has no COMPLETED state yet (non-financial
+  // scaffolding only, per the 2026-09-07 decision to defer Phase 6/7 until Open Decision #1
+  // is resolved), so "0 completed transactions" would misleadingly read as "tracked, none
+  // happened yet" rather than "not built yet."
+  async getFunnel() {
+    const [
+      registered,
+      listingCreators,
+      buyerRequestCreators,
+      qualifiedMatches,
+      totalInterests,
+      grantedContacts,
+      transactionsStarted,
+    ] = await Promise.all([
+      this.prisma.user.count(),
+      this.prisma.listing.findMany({ distinct: ["sellerUserId"], select: { sellerUserId: true } }),
+      this.prisma.buyerRequest.findMany({ distinct: ["buyerUserId"], select: { buyerUserId: true } }),
+      this.prisma.match.count({ where: { qualified: true } }),
+      this.prisma.interest.count(),
+      this.prisma.contactAccessGrant.count({ where: { granted: true } }),
+      this.prisma.lead.count({ where: { status: { in: ["TRANSACTION_STARTED", "WON", "LOST"] } } }),
+    ]);
+
+    const engagedUserIds = new Set([
+      ...listingCreators.map((l) => l.sellerUserId),
+      ...buyerRequestCreators.map((b) => b.buyerUserId),
+    ]);
+
+    const stages = [
+      { key: "registered", label: "Registered", count: registered },
+      { key: "listing_or_request", label: "Buyer Request / Seller Listing", count: engagedUserIds.size },
+      { key: "match", label: "Match", count: qualifiedMatches },
+      { key: "interest", label: "Interest", count: totalInterests },
+      { key: "contact", label: "Contact", count: grantedContacts },
+      { key: "transaction_started", label: "Transaction Started", count: transactionsStarted },
+      {
+        key: "transaction_completed",
+        label: "Transaction Completed",
+        count: null as number | null,
+        note: "Escrow completion isn't built yet — Phase 6/7 is blocked on Open Decision #1 (payment provider).",
+      },
+    ];
+
+    return {
+      stages: stages.map((stage, i) => ({
+        ...stage,
+        conversionFromPrevious:
+          i === 0 || stage.count === null || stages[i - 1].count === null || stages[i - 1].count === 0
+            ? null
+            : Math.round((stage.count! / stages[i - 1].count!) * 10000) / 100,
+      })),
+    };
+  }
 }

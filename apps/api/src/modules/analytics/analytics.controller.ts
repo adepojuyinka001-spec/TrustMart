@@ -16,4 +16,9 @@ export class AnalyticsController {
   getOverview() {
     return this.analyticsService.getOverview();
   }
+
+  @Get("funnel")
+  getFunnel() {
+    return this.analyticsService.getFunnel();
+  }
 }
