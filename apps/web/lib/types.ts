@@ -244,6 +244,23 @@ export interface SubscriptionPlan {
   entitlements: { key: string; value: string; valueType?: string }[];
 }
 
+export interface Role {
+  id: string;
+  key: string;
+  label: string;
+  description?: string | null;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  status: "ACTIVE" | "SUSPENDED" | "DEACTIVATED";
+  referralCode: string | null;
+  createdAt: string;
+  profile?: Profile | null;
+  userRoles: { role: Role }[];
+}
+
 export interface Notification {
   id: string;
   type: string;

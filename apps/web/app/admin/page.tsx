@@ -19,6 +19,7 @@ import {
   SlidersIcon,
   StarIcon,
   TagIcon,
+  UserCircleIcon,
   UsersIcon,
 } from "../../components/icons";
 
@@ -32,6 +33,13 @@ const CONTROL_PANELS: Array<{
   permission: string;
   icon: (p: { className?: string }) => JSX.Element;
 }> = [
+  {
+    href: "/admin/users",
+    label: "Users",
+    description: "Manage accounts, suspend/reactivate, and assign roles.",
+    permission: "user:manage",
+    icon: UserCircleIcon,
+  },
   {
     href: "/admin/listings",
     label: "Listing Moderation",

@@ -24,6 +24,7 @@ const PERMISSIONS = [
   { key: "lead:moderate", label: "Mark a lead as spam/fraud" },
   { key: "subscription:manage", label: "Manage subscription plans and entitlements" },
   { key: "analytics:read", label: "Read platform analytics/KPI overview" },
+  { key: "user:manage", label: "View user accounts and manage role assignments" },
 ];
 
 // ADMIN gets every permission. Other roles get none by default in Shared Core —

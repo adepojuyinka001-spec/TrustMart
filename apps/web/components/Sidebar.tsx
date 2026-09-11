@@ -58,6 +58,7 @@ const ADMIN_SECTION: {
 } = {
   label: "Admin",
   items: [
+    { href: "/admin/users", label: "Users", icon: UserCircleIcon, permission: "user:manage" },
     { href: "/admin/analytics", label: "Analytics", icon: BoxIcon, permission: "analytics:read" },
     { href: "/admin/audit", label: "Audit Log", icon: ClipboardIcon, permission: "audit:read" },
     { href: "/admin/categories", label: "Categories", icon: TagIcon, permission: "category:manage" },
