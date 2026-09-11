@@ -243,3 +243,20 @@ export interface SubscriptionPlan {
   displayOrder?: number;
   entitlements: { key: string; value: string; valueType?: string }[];
 }
+
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  resourceType?: string | null;
+  resourceId?: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationList {
+  items: Notification[];
+  total: number;
+  unreadCount: number;
+}

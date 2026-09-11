@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useAuth } from "../lib/auth-context";
 import { useMobileNav } from "../lib/mobile-nav-context";
 import {
+  BellIcon,
   BoxIcon,
   CheckCircleIcon,
   ClipboardIcon,
@@ -73,6 +74,7 @@ const ALL_HREFS = [
   ...NAV_SECTIONS.flatMap((s) => s.items.map((i) => i.href)),
   "/admin",
   ...ADMIN_SECTION.items.map((i) => i.href),
+  "/notifications",
   "/account",
 ];
 
@@ -191,16 +193,28 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
         <div>
           <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-tm-white/40">Account</p>
-          <Link
-            href="/account"
-            onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
-              pathname === "/account" ? "bg-tm-gold text-tm-dark" : "text-tm-white/80 hover:bg-white/5 hover:text-tm-white"
-            }`}
-          >
-            <UserCircleIcon className="h-[18px] w-[18px] shrink-0" />
-            Referral &amp; Profile
-          </Link>
+          <div className="space-y-0.5">
+            <Link
+              href="/notifications"
+              onClick={onNavigate}
+              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
+                pathname === "/notifications" ? "bg-tm-gold text-tm-dark" : "text-tm-white/80 hover:bg-white/5 hover:text-tm-white"
+              }`}
+            >
+              <BellIcon className="h-[18px] w-[18px] shrink-0" />
+              Notifications
+            </Link>
+            <Link
+              href="/account"
+              onClick={onNavigate}
+              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
+                pathname === "/account" ? "bg-tm-gold text-tm-dark" : "text-tm-white/80 hover:bg-white/5 hover:text-tm-white"
+              }`}
+            >
+              <UserCircleIcon className="h-[18px] w-[18px] shrink-0" />
+              Referral &amp; Profile
+            </Link>
+          </div>
         </div>
       </nav>
 

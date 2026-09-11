@@ -7,6 +7,7 @@ import { useState, type FormEvent } from "react";
 import { useAuth } from "../lib/auth-context";
 import { useMobileNav } from "../lib/mobile-nav-context";
 import { HomeIcon, MenuIcon, SearchIcon, ShieldIcon, ShopIcon, UserCircleIcon } from "./icons";
+import { NotificationBell } from "./NotificationBell";
 
 const PUBLIC_NAV = [
   { href: "/", label: "Home", icon: HomeIcon },
@@ -78,13 +79,16 @@ export function Topbar({ title, subtitle }: { title?: string; subtitle?: string 
 
         <div className="ml-auto flex items-center gap-3 sm:ml-0">
           {loading ? null : user ? (
-            <Link href="/account" className="flex items-center gap-2">
-              <span className="hidden text-right leading-tight sm:block">
-                <span className="block text-sm font-semibold text-tm-dark">{user.profile?.firstName ?? user.email}</span>
-                <span className="block text-xs text-tm-dark/50">TrustMart Member</span>
-              </span>
-              <UserCircleIcon className="h-9 w-9 text-tm-navy" />
-            </Link>
+            <>
+              <NotificationBell />
+              <Link href="/account" className="flex items-center gap-2">
+                <span className="hidden text-right leading-tight sm:block">
+                  <span className="block text-sm font-semibold text-tm-dark">{user.profile?.firstName ?? user.email}</span>
+                  <span className="block text-xs text-tm-dark/50">TrustMart Member</span>
+                </span>
+                <UserCircleIcon className="h-9 w-9 text-tm-navy" />
+              </Link>
+            </>
           ) : (
             <>
               {/* Secondary CTA */}
