@@ -13,6 +13,7 @@ import {
   CheckCircleIcon,
   ClipboardIcon,
   GiftIcon,
+  RefreshIcon,
   SettingsIcon,
   ShieldIcon,
   ShopIcon,
@@ -74,6 +75,13 @@ const CONTROL_PANELS: Array<{
     description: "Adjust deterministic matching criteria per subcategory.",
     permission: "matching:manage",
     icon: SlidersIcon,
+  },
+  {
+    href: "/admin/lifecycle-sweep",
+    label: "Lifecycle Sweep",
+    description: "Manually run the listing ACTIVE → EXPIRING → EXPIRED sweep.",
+    permission: "listing:lifecycle_sweep",
+    icon: RefreshIcon,
   },
   {
     href: "/admin/subscriptions",

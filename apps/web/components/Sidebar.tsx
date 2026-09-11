@@ -16,6 +16,7 @@ import {
   HeartIcon,
   HomeIcon,
   PlusIcon,
+  RefreshIcon,
   SettingsIcon,
   ShieldIcon,
   ShopIcon,
@@ -68,6 +69,7 @@ const ADMIN_SECTION: {
     { href: "/admin/subscriptions", label: "Subscription Plans", icon: StarIcon, permission: "subscription:manage" },
     { href: "/admin/verification", label: "Verification", icon: CheckCircleIcon, permission: "verification:review" },
     { href: "/admin/matching", label: "Matching Weights", icon: SlidersIcon, permission: "matching:manage" },
+    { href: "/admin/lifecycle-sweep", label: "Lifecycle Sweep", icon: RefreshIcon, permission: "listing:lifecycle_sweep" },
   ],
 };
 
