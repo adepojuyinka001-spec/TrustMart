@@ -11,6 +11,7 @@ import {
   CheckCircleIcon,
   ClipboardIcon,
   LogoutIcon,
+  GaugeIcon,
   HeartIcon,
   HomeIcon,
   PlusIcon,
@@ -70,6 +71,7 @@ const ADMIN_SECTION: {
 
 const ALL_HREFS = [
   ...NAV_SECTIONS.flatMap((s) => s.items.map((i) => i.href)),
+  "/admin",
   ...ADMIN_SECTION.items.map((i) => i.href),
   "/account",
 ];
@@ -91,6 +93,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const router = useRouter();
 
   const visibleAdminItems = ADMIN_SECTION.items.filter((item) => user?.permissions?.includes(item.permission));
+  // The hub itself is reachable by ANY admin permission, not one specific one — so it
+  // can't live in ADMIN_SECTION.items (which is filtered on a single permission above).
+  const hasAnyAdminAccess = visibleAdminItems.length > 0;
 
   return (
     <>
@@ -145,12 +150,24 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         ))}
 
-        {visibleAdminItems.length > 0 && (
+        {hasAnyAdminAccess && (
           <div>
             <p className="mb-1.5 px-2 text-[10px] font-bold uppercase tracking-widest text-tm-white/40">
               {ADMIN_SECTION.label}
             </p>
             <div className="space-y-0.5">
+              <Link
+                href="/admin"
+                onClick={onNavigate}
+                className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition ${
+                  pathname === "/admin"
+                    ? "bg-tm-gold text-tm-dark"
+                    : "text-tm-white/80 hover:bg-white/5 hover:text-tm-white"
+                }`}
+              >
+                <GaugeIcon className="h-[18px] w-[18px] shrink-0" />
+                Control Centre
+              </Link>
               {visibleAdminItems.map((item) => {
                 const active = isActiveHref(pathname, item.href);
                 const ItemIcon = item.icon;

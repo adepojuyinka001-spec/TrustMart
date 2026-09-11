@@ -21,6 +21,7 @@ import { EscrowModule } from "./modules/escrow/escrow.module";
 import { ReferralModule } from "./modules/referral/referral.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { MediaModule } from "./modules/media/media.module";
+import { NotificationModule } from "./modules/notification/notification.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -46,6 +47,7 @@ import { HealthController } from "./health/health.controller";
     ReferralModule,
     AnalyticsModule,
     MediaModule,
+    NotificationModule,
   ],
   controllers: [HealthController],
 })

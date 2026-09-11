@@ -186,6 +186,14 @@ export const CheckCircleIcon = (p: SVGProps<SVGSVGElement>) => (
   </Icon>
 );
 
+export const GaugeIcon = (p: SVGProps<SVGSVGElement>) => (
+  <Icon {...p}>
+    <path d="M4 15a8 8 0 1 1 16 0" />
+    <path d="M12 15 16 9" />
+    <circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
 export const ArrowRightIcon = (p: SVGProps<SVGSVGElement>) => (
   <Icon {...p}>
     <path d="M4 12h16" />

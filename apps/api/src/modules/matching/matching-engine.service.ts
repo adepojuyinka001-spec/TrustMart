@@ -231,7 +231,7 @@ export class MatchingEngineService {
         scorePercent: result.scorePercent,
         classification: classifyScore(result.scorePercent),
       };
-      this.eventEmitter.emit("marketplace.match.created", event);
+      await this.eventEmitter.emitAsync("marketplace.match.created", event);
       this.logger.log(`Match qualified: buyerRequest=${buyerRequest.id} listing=${listing.id} score=${result.scorePercent}`);
     }
 

@@ -90,7 +90,7 @@ export class InterestService {
       sellerUserId: listing.sellerUserId,
       listingId: dto.listingId,
     };
-    this.eventEmitter.emit("marketplace.interest.created", event);
+    await this.eventEmitter.emitAsync("marketplace.interest.created", event);
 
     return { ...interest, lead };
   }

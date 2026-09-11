@@ -64,7 +64,7 @@ export class LeadService {
     });
 
     const event: MarketplaceLeadStatusChangedEvent = { leadId, fromStatus: lead.status, toStatus };
-    this.eventEmitter.emit("marketplace.lead.status_changed", event);
+    await this.eventEmitter.emitAsync("marketplace.lead.status_changed", event);
 
     return updated;
   }

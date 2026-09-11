@@ -42,7 +42,7 @@ export class ListingLifecycleService {
         afterState: { status: ListingStatus.EXPIRING },
         ipAddress,
       });
-      this.eventEmitter.emit("marketplace.listing.expiring", { listingId: listing.id, expiresAt: listing.expiresAt });
+      await this.eventEmitter.emitAsync("marketplace.listing.expiring", { listingId: listing.id, expiresAt: listing.expiresAt });
     }
 
     const toExpire = await this.prisma.listing.findMany({
@@ -59,7 +59,7 @@ export class ListingLifecycleService {
         afterState: { status: ListingStatus.EXPIRED },
         ipAddress,
       });
-      this.eventEmitter.emit("marketplace.listing.expired", { listingId: listing.id });
+      await this.eventEmitter.emitAsync("marketplace.listing.expired", { listingId: listing.id });
     }
 
     return { warned: toWarn.length, expired: toExpire.length };

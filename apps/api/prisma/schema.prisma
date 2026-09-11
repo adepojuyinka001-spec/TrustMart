@@ -224,6 +224,27 @@ model NotificationPreference {
   inAppEnabled    Boolean @default(true)
 }
 
+// In-app only for now (CLAUDE.md SS26/SS31: email/SMS/WhatsApp delivery is n8n
+// orchestration territory, Phase 11 — this is just the backend domain events becoming
+// something a user can actually see, which nothing consumed before this). `type` is a
+// free-form dot-namespaced string (e.g. "match.created") mirroring the domain event names
+// in CLAUDE.md SS31, not an enum — new notification types will be added over time without
+// a migration each time.
+model NotificationRecord {
+  id           String   @id @default(cuid())
+  userId       String
+  type         String
+  title        String
+  body         String
+  resourceType String?
+  resourceId   String?
+  isRead       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
 // ---------- Verification foundation ----------
 // Provider-agnostic shell. No live KYC/KYB provider wired in (see OPEN_DECISIONS.md).
 

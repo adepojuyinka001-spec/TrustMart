@@ -104,7 +104,7 @@ export class EscrowService {
       ipAddress,
     });
 
-    this.eventEmitter.emit("escrow.created", { escrowId: escrow.id, originType: dto.originType });
+    await this.eventEmitter.emitAsync("escrow.created", { escrowId: escrow.id, originType: dto.originType });
 
     return this.get(escrow.id, creatorUserId);
   }
@@ -250,7 +250,7 @@ export class EscrowService {
         data: { status: EscrowStatus.ACCEPTED },
       });
       finalStatus = updated.status;
-      this.eventEmitter.emit("escrow.terms_accepted", { escrowId, termVersionId: escrow.activeTermVersionId });
+      await this.eventEmitter.emitAsync("escrow.terms_accepted", { escrowId, termVersionId: escrow.activeTermVersionId });
     }
 
     await this.auditService.record({
