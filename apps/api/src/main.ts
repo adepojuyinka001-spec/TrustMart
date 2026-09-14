@@ -20,16 +20,21 @@ async function bootstrap() {
   app.enableCors({ origin: process.env.WEB_APP_ORIGIN ?? "http://localhost:3000" });
 
   // Dev-only API reference, generated from the actual controllers/DTOs — CLAUDE.md SS28
-  // ("REST/JSON; OpenAPI"). Not gated in this pass since no production secrets/rates are
-  // exposed by route/DTO shapes; revisit before a real deployment.
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle("TrustMart API")
-    .setDescription("Marketplace + Escrow API — Find. Secure. Transact.")
-    .setVersion("0.1.0")
-    .addBearerAuth()
-    .build();
-  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup("api-docs", app, swaggerDocument);
+  // ("REST/JSON; OpenAPI"). Gated out of production: the first real deployment is the
+  // "revisit before a real deployment" moment this comment always pointed at. No
+  // production secrets/rates are exposed by route/DTO shapes, but the full API surface
+  // (every route, every field) still shouldn't be handed to an anonymous public visitor
+  // by default — dev/staging keeps it for convenience.
+  if (process.env.NODE_ENV !== "production") {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle("TrustMart API")
+      .setDescription("Marketplace + Escrow API — Find. Secure. Transact.")
+      .setVersion("0.1.0")
+      .addBearerAuth()
+      .build();
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup("api-docs", app, swaggerDocument);
+  }
 
   const port = process.env.PORT ? Number(process.env.PORT) : 4000;
   await app.listen(port);
