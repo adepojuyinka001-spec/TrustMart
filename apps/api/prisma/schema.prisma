@@ -3,8 +3,14 @@
 // Phase 2 (Marketplace Core): Category/Attribute Engine, Listing Engine, Buyer Request Engine, Matching Engine.
 // Escrow, Rewards and Reviews entities are added in later, separately-approved phases.
 
+// "native" keeps local dev (this Windows machine) working; "rhel-openssl-3.0.x" is
+// Prisma's documented binary target for Vercel Node.js Serverless Functions -- without it,
+// a deployed function crashes on its first query with "Query engine not found for this
+// platform" (the engine generated on Vercel's Linux build machine via "native" detection
+// doesn't reliably match its actual runtime container).
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
