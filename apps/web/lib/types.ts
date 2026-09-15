@@ -223,6 +223,21 @@ export interface MarketplaceFunnel {
   stages: FunnelStage[];
 }
 
+export interface LiquidityRow {
+  subcategoryId: string;
+  subcategoryLabel: string;
+  categoryLabel: string;
+  activeBuyerRequests: number;
+  activeListings: number;
+  demandToSupplyRatio: number | null;
+  classification: "UNDERSUPPLIED" | "OVERSUPPLIED" | "BALANCED";
+  topSupplyLocations: { location: string; listingCount: number }[];
+}
+
+export interface LiquiditySnapshot {
+  subcategories: LiquidityRow[];
+}
+
 export interface AuditEvent {
   id: string;
   actorId: string | null;

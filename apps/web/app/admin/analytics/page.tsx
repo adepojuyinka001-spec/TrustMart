@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
-import type { AnalyticsOverview, MarketplaceFunnel } from "../../../lib/types";
+import type { AnalyticsOverview, LiquiditySnapshot, MarketplaceFunnel } from "../../../lib/types";
 import { useAuth } from "../../../lib/auth-context";
 import { RequirePermission } from "../../../components/RequirePermission";
 import { Topbar } from "../../../components/Topbar";
@@ -57,6 +57,68 @@ function FunnelChart({ funnel }: { funnel: MarketplaceFunnel }) {
   );
 }
 
+const CLASSIFICATION_STYLE: Record<string, string> = {
+  UNDERSUPPLIED: "bg-amber-100 text-amber-800",
+  OVERSUPPLIED: "bg-blue-100 text-blue-800",
+  BALANCED: "bg-emerald-100 text-emerald-800",
+};
+
+// CLAUDE.md SS36 Liquidity Intelligence: demand (active buyer requests) vs. supply (active
+// listings) per subcategory. Geography is supply-side only — see the backend's own comment
+// (analytics.service.ts) for why buyer-side geography isn't broken out here.
+function LiquidityTable({ liquidity }: { liquidity: LiquiditySnapshot }) {
+  if (liquidity.subcategories.length === 0) {
+    return (
+      <div className="tm-card">
+        <h2 className="font-semibold text-tm-navy">Liquidity Intelligence</h2>
+        <p className="mt-4 text-sm text-tm-dark/60">No active buyer requests or listings yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tm-card overflow-x-auto p-0">
+      <div className="border-b border-tm-navy/10 px-5 py-4">
+        <h2 className="font-semibold text-tm-navy">Liquidity Intelligence</h2>
+        <p className="mt-1 text-xs text-tm-dark/50">Demand vs. supply by subcategory — where to focus seller acquisition.</p>
+      </div>
+      <table className="w-full min-w-[640px] text-left text-sm">
+        <thead className="border-b border-tm-navy/10 text-xs uppercase tracking-wide text-tm-dark/50">
+          <tr>
+            <th className="px-5 py-3 font-semibold">Subcategory</th>
+            <th className="px-5 py-3 font-semibold">Demand</th>
+            <th className="px-5 py-3 font-semibold">Supply</th>
+            <th className="px-5 py-3 font-semibold">Ratio</th>
+            <th className="px-5 py-3 font-semibold">Status</th>
+            <th className="px-5 py-3 font-semibold">Top supply locations</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-tm-navy/5">
+          {liquidity.subcategories.map((row) => (
+            <tr key={row.subcategoryId}>
+              <td className="px-5 py-3">
+                <p className="font-medium text-tm-dark">{row.subcategoryLabel}</p>
+                <p className="text-xs text-tm-dark/40">{row.categoryLabel}</p>
+              </td>
+              <td className="px-5 py-3 text-tm-dark/80">{row.activeBuyerRequests}</td>
+              <td className="px-5 py-3 text-tm-dark/80">{row.activeListings}</td>
+              <td className="px-5 py-3 text-tm-dark/80">{row.demandToSupplyRatio ?? "—"}</td>
+              <td className="px-5 py-3">
+                <span className={`tm-badge ${CLASSIFICATION_STYLE[row.classification]}`}>{row.classification}</span>
+              </td>
+              <td className="px-5 py-3 text-xs text-tm-dark/60">
+                {row.topSupplyLocations.length === 0
+                  ? "—"
+                  : row.topSupplyLocations.map((l) => `${l.location} (${l.listingCount})`).join(", ")}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function StatusBreakdown({ title, byStatus }: { title: string; byStatus: Record<string, number> }) {
   const entries = Object.entries(byStatus);
   return (
@@ -82,14 +144,20 @@ function AdminAnalytics() {
   const { token } = useAuth();
   const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
   const [funnel, setFunnel] = useState<MarketplaceFunnel | null>(null);
+  const [liquidity, setLiquidity] = useState<LiquiditySnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.get<AnalyticsOverview>("/admin/analytics/overview", token), api.get<MarketplaceFunnel>("/admin/analytics/funnel", token)])
-      .then(([overviewRes, funnelRes]) => {
+    Promise.all([
+      api.get<AnalyticsOverview>("/admin/analytics/overview", token),
+      api.get<MarketplaceFunnel>("/admin/analytics/funnel", token),
+      api.get<LiquiditySnapshot>("/admin/analytics/liquidity", token),
+    ])
+      .then(([overviewRes, funnelRes, liquidityRes]) => {
         setOverview(overviewRes);
         setFunnel(funnelRes);
+        setLiquidity(liquidityRes);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load analytics."))
       .finally(() => setLoading(false));
@@ -133,6 +201,8 @@ function AdminAnalytics() {
             </div>
 
             {funnel && <FunnelChart funnel={funnel} />}
+
+            {liquidity && <LiquidityTable liquidity={liquidity} />}
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               <StatusBreakdown title="Listings" byStatus={overview.listings.byStatus} />

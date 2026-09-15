@@ -21,4 +21,9 @@ export class AnalyticsController {
   getFunnel() {
     return this.analyticsService.getFunnel();
   }
+
+  @Get("liquidity")
+  getLiquidity() {
+    return this.analyticsService.getLiquidity();
+  }
 }

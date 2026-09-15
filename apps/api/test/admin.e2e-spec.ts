@@ -95,6 +95,70 @@ describe("TrustMart Admin analytics/audit (e2e)", () => {
     expect(completedStage.note).toBeTruthy();
   });
 
+  it("blocks a non-admin from reading liquidity, and allows an admin with a correct demand/supply classification", async () => {
+    const forbiddenBase = await request(app.getHttpServer())
+      .get("/admin/analytics/liquidity")
+      .set("Authorization", `Bearer ${buyerToken}`);
+    expect(forbiddenBase.status).toBe(403);
+
+    const suffix = Date.now();
+    const category = await request(app.getHttpServer())
+      .post("/categories")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ key: `liquidity-cat-${suffix}`, label: "Liquidity Category" });
+    const subcategory = await request(app.getHttpServer())
+      .post(`/categories/${category.body.id}/subcategories`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ key: `liquidity-sub-${suffix}`, label: "Liquidity Subcategory" });
+    const subcategoryId = subcategory.body.id as string;
+
+    const sellerRes = await request(app.getHttpServer()).post("/auth/register").send({
+      email: `seller+liquidity+${suffix}@example.com`,
+      password: "correct-horse-battery-staple",
+      firstName: "Test",
+      lastName: "Seller",
+    });
+    const sellerToken = sellerRes.body.accessToken as string;
+
+    // One ACTIVE listing (supply) vs. three ACTIVE buyer requests (demand) in the same,
+    // freshly-created subcategory -- an unambiguous 3:1 ratio, UNDERSUPPLIED.
+    const listingRes = await request(app.getHttpServer())
+      .post("/listings")
+      .set("Authorization", `Bearer ${sellerToken}`)
+      .send({ subcategoryId, title: "Liquidity test listing", description: "For liquidity analytics.", askingPriceMinorUnits: 100_000, state: "Lagos" });
+    await request(app.getHttpServer()).post(`/listings/${listingRes.body.id}/submit`).set("Authorization", `Bearer ${sellerToken}`);
+    await request(app.getHttpServer()).post(`/listings/${listingRes.body.id}/approve`).set("Authorization", `Bearer ${adminToken}`);
+
+    for (let i = 0; i < 3; i++) {
+      const buyerRes = await request(app.getHttpServer()).post("/auth/register").send({
+        email: `buyer+liquidity+${suffix}+${i}@example.com`,
+        password: "correct-horse-battery-staple",
+        firstName: "Test",
+        lastName: "Buyer",
+      });
+      const buyerToken2 = buyerRes.body.accessToken as string;
+      const brRes = await request(app.getHttpServer())
+        .post("/buyer-requests")
+        .set("Authorization", `Bearer ${buyerToken2}`)
+        .send({ subcategoryId });
+      await request(app.getHttpServer())
+        .post(`/buyer-requests/${brRes.body.id}/activate`)
+        .set("Authorization", `Bearer ${buyerToken2}`);
+    }
+
+    const allowed = await request(app.getHttpServer())
+      .get("/admin/analytics/liquidity")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(allowed.status).toBe(200);
+    const row = allowed.body.subcategories.find((s: { subcategoryId: string }) => s.subcategoryId === subcategoryId);
+    expect(row).toBeDefined();
+    expect(row.activeBuyerRequests).toBe(3);
+    expect(row.activeListings).toBe(1);
+    expect(row.demandToSupplyRatio).toBe(3);
+    expect(row.classification).toBe("UNDERSUPPLIED");
+    expect(row.topSupplyLocations).toEqual(expect.arrayContaining([expect.objectContaining({ location: "Lagos", listingCount: 1 })]));
+  });
+
   it("rejects unauthenticated access to both admin endpoints", async () => {
     const overviewRes = await request(app.getHttpServer()).get("/admin/analytics/overview");
     expect(overviewRes.status).toBe(401);

@@ -3,10 +3,9 @@ import { PrismaService } from "../../prisma/prisma.service";
 
 // Read-only aggregate counts across what's actually built so far (CLAUDE.md SS25/SS35:
 // Admin Control Centre + Analytics). Deliberately simple counts/group-bys, not the full
-// funnel (Visitor -> Registered -> ... -> Repeat) or Liquidity Intelligence — those need
-// event-timestamp analysis and demand/supply-by-geography breakdowns that aren't wired
-// yet. No financial figures here (GMV, subscription revenue, Escrow value) since none of
-// that exists in a completed/paid state yet.
+// funnel (Visitor -> Registered -> ... -> Repeat) — that needs event-timestamp analysis
+// not wired yet. No financial figures here (GMV, subscription revenue, Escrow value) since
+// none of that exists in a completed/paid state yet.
 @Injectable()
 export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -113,5 +112,82 @@ export class AnalyticsService {
             : Math.round((stage.count! / stages[i - 1].count!) * 10000) / 100,
       })),
     };
+  }
+
+  // CLAUDE.md SS36: "Build internal analytics capable of detecting demand/supply
+  // imbalances by category, subcategory, geography, budget/price range, buyer criteria...
+  // The system may recommend targeted seller acquisition." Geography is deliberately
+  // supply-side only (Listing.state is a clean, groupable column) — BuyerRequest only
+  // stores `preferredLocations` as a free-text JSON array, and aggregating that into
+  // per-location buyer counts would mean fuzzy-matching short, small-sample strings that
+  // could end up singling out an individual buyer's stated location, which SS36 itself
+  // warns against ("Do not expose sensitive individual buyer intent in management
+  // summaries unnecessarily"). Classification thresholds (ratio >= 2 / <= 0.5) are a
+  // presentation heuristic to make an already-computed ratio scannable, not a business
+  // rule — CLAUDE.md SS39 lists "final moderation thresholds" as unresolved, and this
+  // isn't one of those anyway since nothing acts on the label automatically.
+  async getLiquidity() {
+    const [buyerRequestCounts, listingCounts, listingsByLocation] = await Promise.all([
+      this.prisma.buyerRequest.groupBy({ by: ["subcategoryId"], where: { status: "ACTIVE" }, _count: { _all: true } }),
+      this.prisma.listing.groupBy({ by: ["subcategoryId"], where: { status: "ACTIVE" }, _count: { _all: true } }),
+      this.prisma.listing.groupBy({
+        by: ["subcategoryId", "state"],
+        where: { status: "ACTIVE", state: { not: null } },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const subcategoryIds = Array.from(
+      new Set([...buyerRequestCounts.map((r) => r.subcategoryId), ...listingCounts.map((r) => r.subcategoryId)]),
+    );
+    const subcategories = await this.prisma.subcategory.findMany({
+      where: { id: { in: subcategoryIds } },
+      include: { category: true },
+    });
+    const subcategoryById = new Map(subcategories.map((s) => [s.id, s]));
+
+    const demandBySubcategory = new Map(buyerRequestCounts.map((r) => [r.subcategoryId, r._count._all]));
+    const supplyBySubcategory = new Map(listingCounts.map((r) => [r.subcategoryId, r._count._all]));
+
+    const locationsBySubcategory = new Map<string, Array<{ location: string; listingCount: number }>>();
+    for (const row of listingsByLocation) {
+      if (!row.state) continue;
+      const list = locationsBySubcategory.get(row.subcategoryId) ?? [];
+      list.push({ location: row.state, listingCount: row._count._all });
+      locationsBySubcategory.set(row.subcategoryId, list);
+    }
+
+    const rows = subcategoryIds
+      .map((id) => {
+        const subcategory = subcategoryById.get(id);
+        if (!subcategory) return null;
+        const demand = demandBySubcategory.get(id) ?? 0;
+        const supply = supplyBySubcategory.get(id) ?? 0;
+        const ratio = supply > 0 ? Math.round((demand / supply) * 100) / 100 : null;
+
+        let classification: "UNDERSUPPLIED" | "OVERSUPPLIED" | "BALANCED";
+        if (supply === 0 && demand > 0) classification = "UNDERSUPPLIED";
+        else if (demand === 0 && supply > 0) classification = "OVERSUPPLIED";
+        else if (ratio !== null && ratio >= 2) classification = "UNDERSUPPLIED";
+        else if (ratio !== null && ratio <= 0.5) classification = "OVERSUPPLIED";
+        else classification = "BALANCED";
+
+        return {
+          subcategoryId: id,
+          subcategoryLabel: subcategory.label,
+          categoryLabel: subcategory.category.label,
+          activeBuyerRequests: demand,
+          activeListings: supply,
+          demandToSupplyRatio: ratio,
+          classification,
+          topSupplyLocations: (locationsBySubcategory.get(id) ?? [])
+            .sort((a, b) => b.listingCount - a.listingCount)
+            .slice(0, 5),
+        };
+      })
+      .filter((r): r is NonNullable<typeof r> => r !== null && (r.activeBuyerRequests > 0 || r.activeListings > 0))
+      .sort((a, b) => b.activeBuyerRequests - a.activeBuyerRequests);
+
+    return { subcategories: rows };
   }
 }
