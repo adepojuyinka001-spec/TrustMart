@@ -215,7 +215,7 @@ function AdminUsers() {
                               disabled={isBusy}
                               onClick={() => revokeRole(u.id, ur.role.key)}
                               aria-label={`Remove ${ur.role.label} role`}
-                              className="text-tm-navy/50 hover:text-red-600 disabled:opacity-40"
+                              className="-m-1.5 p-1.5 text-tm-navy/50 hover:text-red-600 disabled:opacity-40"
                             >
                               ×
                             </button>

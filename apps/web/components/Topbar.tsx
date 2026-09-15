@@ -30,7 +30,12 @@ export function Topbar({ title, subtitle }: { title?: string; subtitle?: string 
     <header className="border-b border-tm-navy/10 bg-tm-white">
       <div className="flex flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
         {user ? (
-          <button type="button" onClick={toggle} aria-label="Open menu" className="text-tm-navy lg:hidden">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label="Open menu"
+            className="-m-2.5 p-2.5 text-tm-navy lg:hidden"
+          >
             <MenuIcon className="h-6 w-6" />
           </button>
         ) : (
@@ -72,6 +77,7 @@ export function Topbar({ title, subtitle }: { title?: string; subtitle?: string 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search listings…"
+              aria-label="Search listings"
               className="w-full bg-transparent text-sm outline-none placeholder:text-tm-dark/40"
             />
           </div>
