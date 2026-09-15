@@ -935,3 +935,81 @@ model EscrowAcceptance {
 
   @@unique([termVersionId, userId])
 }
+
+// ---------- Financial Ledger (Phase 6, engine only — no provider wired) ----------
+// CLAUDE.md SS17: "The Financial Ledger is financial truth." This is the accounting
+// primitive every future payment/fee/reward flow will post through — balanced double-entry,
+// integer minor units (never floating point), immutable once posted, idempotent via
+// external reference. It intentionally does NOT wire to any payment provider, does not
+// define a final chart of accounts (CLAUDE.md SS39 lists that as an unresolved Open
+// Decision — LedgerAccount.key is a free-form string precisely so nothing here commits to
+// one), and nothing in the app posts to it yet. Provider-agnostic groundwork only, same
+// "build the abstraction, defer the vendor" pattern already used for AuthProvider and
+// MediaStorage — the actual funding/fee/reward flows that will post here are blocked on
+// Open Decision #1 (payment provider) and stay blocked.
+enum LedgerAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum LedgerDirection {
+  DEBIT
+  CREDIT
+}
+
+model LedgerAccount {
+  id        String            @id @default(cuid())
+  key       String            @unique // e.g. "escrow:funds_held:<escrowId>" -- free-form, not a fixed chart of accounts
+  label     String
+  type      LedgerAccountType
+  currency  String            @default("NGN")
+  createdAt DateTime          @default(now())
+
+  entries LedgerEntry[]
+}
+
+// One journal = one atomic, balanced posting (CLAUDE.md SS17: "balanced journal entries").
+// Never updated or deleted after creation -- a correction is a new journal via
+// LedgerService.reverseJournal(), never a mutation of this one.
+model LedgerJournal {
+  id          String   @id @default(cuid())
+  description String
+  postedBy    String? // actorId; null when system-posted
+  createdAt   DateTime @default(now())
+
+  entries            LedgerEntry[]
+  externalReferences LedgerExternalReference[]
+}
+
+model LedgerEntry {
+  id               String            @id @default(cuid())
+  journalId        String
+  journal          LedgerJournal     @relation(fields: [journalId], references: [id])
+  accountId        String
+  account          LedgerAccount     @relation(fields: [accountId], references: [id])
+  direction        LedgerDirection
+  amountMinorUnits BigInt
+  currency         String
+  createdAt        DateTime          @default(now())
+
+  @@index([accountId])
+  @@index([journalId])
+}
+
+// Idempotency: the same external event (e.g. a payment provider's reference) must only
+// ever post one journal, even under retry/replay (CLAUDE.md SS16: "enforce idempotency").
+// Scoped by (source, reference) rather than a single global key, since different sources
+// (payment provider, subscription, escrow fee) shouldn't collide on reference format.
+model LedgerExternalReference {
+  id        String        @id @default(cuid())
+  journalId String
+  journal   LedgerJournal @relation(fields: [journalId], references: [id])
+  source    String
+  reference String
+  createdAt DateTime      @default(now())
+
+  @@unique([source, reference])
+}
