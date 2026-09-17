@@ -71,7 +71,7 @@ export function Topbar({ title, subtitle }: { title?: string; subtitle?: string 
         )}
 
         <form onSubmit={handleSearch} className="order-last w-full flex-1 sm:order-none sm:w-auto sm:max-w-sm">
-          <div className="flex items-center gap-2 rounded-md border border-tm-navy/15 bg-tm-navy/[0.03] px-3 py-2">
+          <div className="flex items-center gap-2 rounded-md border border-tm-navy/15 bg-tm-navy/[0.03] px-3 py-2 transition focus-within:border-tm-navy focus-within:ring-1 focus-within:ring-tm-navy">
             <SearchIcon className="h-4 w-4 shrink-0 text-tm-dark/40" />
             <input
               value={query}
