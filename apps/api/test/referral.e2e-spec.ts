@@ -72,4 +72,20 @@ describe("TrustMart Company Referral (e2e)", () => {
     const res = await request(app.getHttpServer()).get("/referrals/mine");
     expect(res.status).toBe(401);
   });
+
+  // CLAUDE.md SS18: confidential reward/referral rates must never reach a customer-facing
+  // API response. No reward computation exists yet, so this is a forward-looking guard --
+  // if a future change to getMine() ever starts including a rate/percentage-shaped field,
+  // this test (not just the static-scan spec in the referral module) catches it at the
+  // actual HTTP boundary, whatever the field ends up being named.
+  it("never exposes anything reward-rate-shaped on the response (leakage guard)", async () => {
+    const suffix = Date.now();
+    const token = await register(`leakage-check+${suffix}@example.com`);
+    const mineRes = await request(app.getHttpServer()).get("/referrals/mine").set("Authorization", `Bearer ${token}`);
+
+    expect(Object.keys(mineRes.body).sort()).toEqual(["peopleReferred", "referralCode", "referredBy"]);
+
+    const serialized = JSON.stringify(mineRes.body);
+    expect(serialized).not.toMatch(/rate|percent|%/i);
+  });
 });

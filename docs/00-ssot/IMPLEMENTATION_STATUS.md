@@ -89,7 +89,7 @@ Reflects what actually exists in the codebase, not what is planned. Update at th
 - [x] **Fake-account detection (duplicate-registration-IP) — see "TrustGuard / Risk" below.** Fabricated-transaction and collusive-reward-farming detection remain not built — both need a completed/funded transaction history to detect collusion patterns over, which doesn't exist yet (Open Decision #1).
 - [ ] Internal versioned reward policy
 - [ ] Ledger-backed reward credit
-- [ ] Leakage tests (API/logs/DTOs)
+- [x] **Leakage tests (API/logs/DTOs)** — the one piece of Phase 8 that needed no reward computation to exist first (CLAUDE.md SS18: confidential reward/referral rates must never reach customer-facing code — a hard rule, not best-effort). Two guards: `apps/api/src/modules/referral/reward-rate-leakage.spec.ts` statically scans every `.ts`/`.tsx`/`.js`/`.jsx` file under `apps/api/src` and `apps/web` (CLAUDE.md itself, at repo root, is outside both trees and never scanned) for the real confidential percentage literals, failing the build if either appears anywhere outside CLAUDE.md; and a new e2e case in `test/referral.e2e-spec.ts` asserts `GET /referrals/mine`'s response has exactly its three known-safe keys (`referralCode`/`referredBy`/`peopleReferred`) and that its serialized JSON never matches `/rate|percent|%/i`. Both start green today (nothing computes a reward yet) and exist purely as forward-looking regression guards for whenever Reward computation/payout is eventually unblocked.
 - [ ] Reward computation/payout — **blocked**: requires a completed, funded Escrow transaction, which requires Phase 6 (Payments & Ledger), which is blocked on Open Decision #1. Only the referral *relationship* is tracked so far, never a reward amount.
 
 ## Reviews
