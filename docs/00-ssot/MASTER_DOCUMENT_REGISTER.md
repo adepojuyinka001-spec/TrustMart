@@ -11,6 +11,7 @@ Tracks every current authoritative document and its status. Update whenever a do
 | Implementation Status | `docs/00-ssot/IMPLEMENTATION_STATUS.md` | — | Current | What is actually built, by module |
 | Decision Log | `docs/00-ssot/DECISION_LOG.md` | — | Current | Append-only record of approved decisions |
 | Risk Register | `docs/00-ssot/RISK_REGISTER.md` | — | Current | Tracked security/financial/compliance risks |
+| Provider Decision Briefing | `docs/00-ssot/PROVIDER_DECISION_BRIEFING.md` | — | Current | Researched payment/escrow and KYC/KYB provider options for Open Decisions #1/#5 — informational only, not a recommendation or a decision; supports the founder/legal decision, doesn't make it |
 | Marketplace Technical Architecture & Database Blueprint | `docs/02-architecture/TRUSTMART_MARKETPLACE_TECHNICAL_ARCHITECTURE_AND_DATABASE_BLUEPRINT_v1.0.md` | v1.0 | Current | Implementation-ready architecture; not yet reconciled against v5.0 wording — treat v5.0 as authoritative on conflict |
 | Claude Code Master Prompts | `docs/09-prompts/CLAUDE_CODE_MASTER_PROMPTS.md` | v2.0 | Current | Reusable prompts for each build phase; not yet reconciled against v5.0 wording |
 | Start Here Checklist | `docs/START_HERE_CHECKLIST.md` | v2.0 | Current | Onboarding checklist |
