@@ -1013,3 +1013,43 @@ model LedgerExternalReference {
 
   @@unique([source, reference])
 }
+
+// ---------- TrustGuard risk signals (Phase 7, detection only — never auto-acts) ----------
+// CLAUDE.md SS23: "AI may assist analysis. AI must not independently... decide fraud guilt
+// permanently... release/refund funds; resolve serious disputes." This is deterministic
+// backend detection (not AI), and it only ever flags — nothing here suspends an account,
+// removes a listing, or blocks any action; an admin reviews and acts through the existing,
+// already-guarded moderation endpoints (e.g. ListingController's approve/reject,
+// AdminUserController's status change), never through this model directly. Detection
+// itself is intentionally scoped to signals that need no payment or KYC provider —
+// duplicate-registration-IP and outlier listing pricing — the provider-dependent risk
+// categories (payment anomalies, KYC mismatches) stay unbuilt (Open Decisions #1/#5).
+enum RiskCaseCategory {
+  DUPLICATE_ACCOUNTS
+  SUSPICIOUS_PRICING
+}
+
+enum RiskCaseStatus {
+  OPEN
+  DISMISSED
+  ACTIONED
+}
+
+model RiskCase {
+  id           String           @id @default(cuid())
+  category     RiskCaseCategory
+  subjectType  String // e.g. "User", "Listing" -- kept generic like AuditEvent.resourceType
+  subjectId    String
+  description  String
+  status       RiskCaseStatus   @default(OPEN)
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  reviewNotes  String?
+  detectedAt   DateTime         @default(now())
+
+  // No DB-level uniqueness on (category, subject) -- a case can recur after being dismissed
+  // or actioned (e.g. the same account trips SUSPICIOUS_PRICING again later), so uniqueness
+  // is enforced by the service only against currently-OPEN cases, not all-time.
+  @@index([status])
+  @@index([category, subjectType, subjectId])
+}

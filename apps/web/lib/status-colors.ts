@@ -26,6 +26,9 @@ const PALETTE: Record<string, string> = {
   SPAM_FRAUD: "bg-red-100 text-red-800",
   SUSPENDED: "bg-red-100 text-red-800",
   ARCHIVED: "bg-gray-100 text-gray-500",
+  OPEN: "bg-amber-100 text-amber-800",
+  DISMISSED: "bg-gray-100 text-gray-500",
+  ACTIONED: "bg-emerald-100 text-emerald-800",
 };
 
 export function statusBadgeClass(status: string): string {

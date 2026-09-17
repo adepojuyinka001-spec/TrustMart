@@ -26,13 +26,14 @@ const PERMISSIONS = [
   { key: "analytics:read", label: "Read platform analytics/KPI overview" },
   { key: "user:manage", label: "View user accounts and manage role assignments" },
   { key: "ledger:read", label: "Read the financial ledger (accounts, balances, entries)" },
+  { key: "risk:manage", label: "Run TrustGuard risk scans and review flagged cases" },
 ];
 
 // ADMIN gets every permission. Other roles get none by default in Shared Core —
 // later phases (Marketplace, Escrow) grant module-specific permissions to SELLER/BUYER/etc.
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   ADMIN: PERMISSIONS.map((p) => p.key),
-  RISK_ANALYST: ["verification:review", "audit:read", "lead:moderate"],
+  RISK_ANALYST: ["verification:review", "audit:read", "lead:moderate", "risk:manage"],
   SUPPORT: ["audit:read"],
 };
 

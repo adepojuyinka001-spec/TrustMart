@@ -70,6 +70,7 @@ const ADMIN_SECTION: {
     { href: "/admin/verification", label: "Verification", icon: CheckCircleIcon, permission: "verification:review" },
     { href: "/admin/matching", label: "Matching Weights", icon: SlidersIcon, permission: "matching:manage" },
     { href: "/admin/lifecycle-sweep", label: "Lifecycle Sweep", icon: RefreshIcon, permission: "listing:lifecycle_sweep" },
+    { href: "/admin/risk", label: "TrustGuard Risk", icon: ShieldIcon, permission: "risk:manage" },
   ],
 };
 

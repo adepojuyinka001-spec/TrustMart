@@ -23,6 +23,7 @@ import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { MediaModule } from "./modules/media/media.module";
 import { NotificationModule } from "./modules/notification/notification.module";
 import { LedgerModule } from "./modules/ledger/ledger.module";
+import { RiskModule } from "./modules/risk/risk.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -50,6 +51,7 @@ import { HealthController } from "./health/health.controller";
     MediaModule,
     NotificationModule,
     LedgerModule,
+    RiskModule,
   ],
   controllers: [HealthController],
 })

@@ -238,6 +238,25 @@ export interface LiquiditySnapshot {
   subcategories: LiquidityRow[];
 }
 
+export interface RiskCase {
+  id: string;
+  category: "DUPLICATE_ACCOUNTS" | "SUSPICIOUS_PRICING";
+  subjectType: string;
+  subjectId: string;
+  description: string;
+  status: "OPEN" | "DISMISSED" | "ACTIONED";
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+  detectedAt: string;
+}
+
+export interface ScanResult {
+  duplicateAccounts: number;
+  suspiciousPricing: number;
+  totalCreated: number;
+}
+
 export interface AuditEvent {
   id: string;
   actorId: string | null;

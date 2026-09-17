@@ -84,6 +84,13 @@ const CONTROL_PANELS: Array<{
     icon: RefreshIcon,
   },
   {
+    href: "/admin/risk",
+    label: "TrustGuard Risk",
+    description: "Scan for duplicate accounts and suspicious pricing, review flagged cases.",
+    permission: "risk:manage",
+    icon: ShieldIcon,
+  },
+  {
     href: "/admin/subscriptions",
     label: "Subscription Plans",
     description: "Configure seller plans, pricing, and entitlements.",
